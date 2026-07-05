@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Brand tokens (CLAUDE.md §4 / docs/design-system.md §2).
+ * Raw hex lives ONLY here — components must reference the semantic
+ * Tailwind classes (bg-primary, text-accent, border-border, etc.).
+ */
+:root {
+  --color-primary: #14213d; /* Oxford Blue — primary text/dark surfaces */
+  --color-accent: #22ae89; /* Jungle Green — primary action / AI identity / success */
+  --color-warning: #fca311; /* Brand Orange — secondary accent / warnings */
+  --color-danger: #d62828; /* Fire Red — errors / destructive */
+  --color-border: #e3e3e3; /* Platinum — borders/dividers/disabled */
+  --color-bg: #ffffff;
+  --color-surface: #f7f8fa;
+  --color-muted: #6b7280;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-primary);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Respect reduced-motion preference (design-system.md §7). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
