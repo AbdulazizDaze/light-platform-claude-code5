@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Alexandria, Readex_Pro } from "next/font/google";
+import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
 const alexandria = Alexandria({
@@ -27,7 +28,10 @@ export default function RootLayout({
 }) {
   return (
     <html dir="rtl" lang="ar" className={`${alexandria.variable} ${readexPro.variable}`}>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

@@ -18,6 +18,33 @@ const config: Config = {
         bg: "var(--color-bg)",
         surface: "var(--color-surface)",
         muted: "var(--color-muted)",
+
+        /*
+         * shadcn/ui semantic slots (docs/design-system.md §5). These read the
+         * HSL-triplet CSS variables in app/globals.css, which are themselves
+         * mapped to the Light brand tokens above — shadcn primitives never
+         * introduce their own colors.
+         */
+        background: "hsl(var(--background) / <alpha-value>)",
+        foreground: "hsl(var(--foreground) / <alpha-value>)",
+        card: {
+          DEFAULT: "hsl(var(--card) / <alpha-value>)",
+          foreground: "hsl(var(--card-foreground) / <alpha-value>)",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover) / <alpha-value>)",
+          foreground: "hsl(var(--popover-foreground) / <alpha-value>)",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary) / <alpha-value>)",
+          foreground: "hsl(var(--secondary-foreground) / <alpha-value>)",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive) / <alpha-value>)",
+          foreground: "hsl(var(--destructive-foreground) / <alpha-value>)",
+        },
+        input: "hsl(var(--input) / <alpha-value>)",
+        ring: "hsl(var(--ring))",
       },
       fontFamily: {
         sans: ["var(--font-alexandria)"],
@@ -60,9 +87,28 @@ const config: Config = {
         base: "200ms",
         slow: "320ms",
       },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "fade-in": {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-in": "fade-in 200ms ease-out",
+      },
     },
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
 };
 
 export default config;

@@ -16,6 +16,43 @@
   --color-bg: #ffffff;
   --color-surface: #f7f8fa;
   --color-muted: #6b7280;
+
+  /*
+   * shadcn/ui theme mapping (docs/design-system.md §5).
+   * shadcn primitives read these HSL-triplet variables via
+   * `hsl(var(--token) / <alpha-value>)` in tailwind.config.ts. We map every
+   * shadcn variable to an existing Light brand token — never introduce a new
+   * raw color here for a shadcn slot.
+   */
+  --background: 0 0% 100%; /* --color-bg */
+  --foreground: 221 51% 16%; /* --color-primary (oxford) */
+
+  --card: 220 23% 97%; /* --color-surface */
+  --card-foreground: 221 51% 16%; /* --color-primary */
+
+  --popover: 0 0% 100%; /* --color-bg */
+  --popover-foreground: 221 51% 16%; /* --color-primary */
+
+  --primary: 164 67% 41%; /* --color-accent (jungle) — shadcn "primary" = Light's main action color */
+  --primary-foreground: 0 0% 100%; /* white text on jungle */
+
+  --secondary: 0 0% 100%; /* oxford outline button = white fill */
+  --secondary-foreground: 221 51% 16%; /* --color-primary */
+
+  --muted: 220 23% 97%; /* --color-surface, used for muted backgrounds */
+  --muted-foreground: 220 9% 46%; /* --color-muted */
+
+  --accent: 164 67% 41%; /* --color-accent (jungle), used for hover/highlight backgrounds */
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 69% 50%; /* --color-danger (fire) */
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 0 0% 89%; /* --color-border (platinum) */
+  --input: 0 0% 89%; /* --color-border (platinum) */
+  --ring: 164 67% 41% / 0.4; /* --color-accent at 40% — focus ring per design-system.md §2 */
+
+  --radius: 0.75rem; /* 12px — md radius, the shadcn default component radius */
 }
 
 html,
