@@ -1,0 +1,82 @@
+{
+  "personal": {
+    "name": "Sara Al-Qahtani",
+    "title": { "en": "Frontend Developer", "ar": "مطورة واجهات أمامية" },
+    "city": "Riyadh",
+    "phone": "+966 5X XXX XXXX",
+    "email": "sara.example@email.com",
+    "linkedin_url": "linkedin.com/in/sara-example"
+  },
+  "professional_summary": {
+    "en": "Sara is a frontend developer and recent graduate of King Saud University with hands-on experience building responsive, accessible web interfaces. She combines strong JavaScript fundamentals with a keen eye for UI polish, and is looking to grow into a full-stack role at a fast-moving Saudi tech company.",
+    "ar": "سارة مطورة واجهات أمامية وخريجة حديثة من جامعة الملك سعود، لديها خبرة عملية في بناء واجهات ويب متجاوبة وسهلة الاستخدام. تجمع بين أساسيات قوية في جافاسكريبت وحس عالٍ في تفاصيل الواجهة، وتتطلع للنمو نحو دور متكامل (فرونت وباك) في شركة تقنية سعودية سريعة النمو."
+  },
+  "education": [
+    {
+      "institution": "King Saud University",
+      "degree": "B.Sc.",
+      "field": "Computer Science",
+      "start_year": 2019,
+      "end_year": 2023,
+      "gpa": 4.6,
+      "achievements": ["Dean's List, 2022", "Capstone project: accessible e-commerce UI kit"]
+    }
+  ],
+  "experience": [
+    {
+      "company": "Jarir Bookstore",
+      "title": { "en": "Sales Associate", "ar": "موظفة مبيعات" },
+      "city": "Riyadh",
+      "start_date": "2021",
+      "end_date": "2022",
+      "is_current": false,
+      "description": "Handled customer service and point-of-sale operations in a high-traffic retail environment.",
+      "achievements": [
+        "Consistently exceeded monthly sales targets by 15%",
+        "Trained 4 new hires on POS systems and inventory workflows"
+      ]
+    },
+    {
+      "company": "Nour Digital Agency",
+      "title": { "en": "Frontend Developer Intern", "ar": "متدربة تطوير واجهات أمامية" },
+      "city": "Riyadh",
+      "start_date": "2023",
+      "end_date": null,
+      "is_current": true,
+      "description": "Building and maintaining responsive React interfaces for client marketing sites.",
+      "achievements": [
+        "Rebuilt a legacy jQuery site in React, cutting load time by 40%",
+        "Introduced a shared component library used across 3 client projects"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Accessible E-commerce UI Kit",
+      "description": "A component library focused on WCAG AA compliance for Arabic/English e-commerce storefronts.",
+      "technologies": ["React", "TypeScript", "Tailwind CSS"],
+      "url": "github.com/sara-example/a11y-ui-kit",
+      "highlights": ["Full RTL support", "Used by 2 bootcamp cohorts as a teaching reference"]
+    }
+  ],
+  "skills": [
+    { "name": "JavaScript", "level": 4, "category": "technical", "inferred": false },
+    { "name": "React", "level": 4, "category": "technical", "inferred": false },
+    { "name": "HTML/CSS", "level": 5, "category": "technical", "inferred": false },
+    { "name": { "en": "Responsive Design", "ar": "التصميم المتجاوب" }, "level": 4, "category": "technical", "inferred": true },
+    { "name": { "en": "Customer Service", "ar": "خدمة العملاء" }, "level": 4, "category": "soft", "inferred": true },
+    { "name": { "en": "Team Collaboration", "ar": "العمل الجماعي" }, "level": 4, "category": "soft", "inferred": true },
+    { "name": "Git", "level": 3, "category": "technical", "inferred": false },
+    { "name": { "en": "Problem Solving", "ar": "حل المشكلات" }, "level": 4, "category": "soft", "inferred": true }
+  ],
+  "languages": [
+    { "language": "Arabic", "proficiency": "Native" },
+    { "language": "English", "proficiency": "Professional" }
+  ],
+  "certifications": [
+    { "name": "Meta Front-End Developer Professional Certificate", "issuer": "Coursera / Meta", "date": "2023", "url": "coursera.org/verify/example" }
+  ],
+  "volunteer_work": [
+    "Code club mentor for high-school girls, Misk Foundation, 2022-2023"
+  ]
+}
