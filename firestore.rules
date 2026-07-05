@@ -1,0 +1,88 @@
+rules_version = '2';
+
+// Light — Firestore Security Rules
+//
+// Scope: Milestone 1 (Full Candidate Experience) only. Collections that
+// belong to M2 (companies, job_posts, matches, notifications) are NOT
+// declared here yet — they ship with their own rules in the M2 slice
+// (docs/build-roadmap.md, .claude/skills/firestore-rules/SKILL.md).
+// Everything not explicitly matched below is denied by the default-deny
+// fallback at the bottom of this file.
+//
+// Access model (PRD §9.8, docs/data-models.md):
+//   - users/{uid}              owner-only read/write, identity fields locked
+//   - candidate_profiles/{uid} owner-only read/write
+//   - chat_sessions/{uid}      owner-only read/write
+//
+// Identity integrity (CLAUDE.md §3.4 / §7): the *client* must never be able
+// to change its own uid, role, or phone via a direct Firestore write. Those
+// fields are set once at account creation and afterward are server-managed
+// (Admin SDK bypasses these rules entirely, so API routes remain the
+// sanctioned path for identity changes, e.g. a future admin-mediated phone
+// update flow).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // True if the incoming write does not touch any of the given field names
+    // relative to the existing document. Used to lock down identity fields
+    // on update while still allowing owners to edit their own non-identity
+    // fields (e.g. lang_pref, notification_prefs, fcm_token).
+    function unchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // --- users/{uid} --------------------------------------------------
+    // Identity document. Authoritative for name/email/phone/role/gender/
+    // city/nationality (docs/data-models.md).
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+
+      // Creation: a candidate may create only their own user doc, and only
+      // as role 'candidate' — M1 has no client-side recruiter registration
+      // path. (M2 will add a parallel, explicit allowance for recruiters.)
+      allow create: if isOwner(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.role == 'candidate';
+
+      // Update: owner-only, and must not change uid/role/phone. Those are
+      // identity-integrity fields; legitimate changes to them (e.g. a
+      // verified phone-number update) go through a server-side (Admin SDK)
+      // flow, not a direct client write.
+      allow update: if isOwner(uid) && unchanged(['uid', 'role', 'phone']);
+
+      allow delete: if false; // account deletion is a server-mediated flow (PDPL data-subject rights)
+    }
+
+    // --- candidate_profiles/{uid} --------------------------------------
+    // Owner-only. In M1 the API routes (Admin SDK) perform the actual
+    // profile writes (CV generation, preferences), so client write access
+    // here mainly covers owner-initiated edits (e.g. cv_template/theme
+    // changes) and is scoped to the profile's own uid.
+    match /candidate_profiles/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // --- chat_sessions/{uid} --------------------------------------------
+    // Owner-only. One active session document per candidate in M1.
+    match /chat_sessions/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // --- Default deny ----------------------------------------------------
+    // Anything not explicitly matched above (including M2 collections not
+    // yet declared) is denied by default under Firestore's rules model —
+    // this catch-all makes that intent explicit and future-proofs against
+    // an accidental open `match /{document=**}` being added elsewhere.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

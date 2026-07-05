@@ -1,0 +1,5 @@
+{
+  "_comment": "Milestone 1 scaffold. All M1 reads (users/{uid}, candidate_profiles/{uid}, chat_sessions/{uid}) are single-document reads by uid — no compound queries, so no composite indexes are required yet. M2 (matching engine) will add composite indexes here for job_posts (status + city + job_type + work_arrangement) and candidate_profiles (preferences.cities array-contains + preferences.job_type array-contains), per docs/data-models.md and the firestore-rules skill. Do not add indexes speculatively — add them when the backing query ships.",
+  "indexes": [],
+  "fieldOverrides": []
+}
