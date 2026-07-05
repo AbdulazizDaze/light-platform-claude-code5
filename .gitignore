@@ -1,0 +1,29 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+dist/
+build/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+*service-account*.json
+*serviceAccount*.json
+
+# logs & os
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# testing / coverage
+coverage/
+
+# vercel / firebase
+.vercel
+.firebase/
+firebase-debug.log
