@@ -169,7 +169,10 @@ const DropdownMenuSeparator = React.forwardRef<
 DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName;
 
 const DropdownMenuShortcut = ({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) => (
-  <span className={cn("ms-auto text-xs tracking-widest text-muted", className)} {...props} />
+  // No tracking-* here: this can render Arabic text, and letter-spacing
+  // breaks Arabic glyph joining (design-system.md §3). Latin shortcut labels
+  // (e.g. "Ctrl+K") still read fine without extra tracking.
+  <span className={cn("ms-auto text-xs text-muted", className)} {...props} />
 );
 DropdownMenuShortcut.displayName = "DropdownMenuShortcut";
 

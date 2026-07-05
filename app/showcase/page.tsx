@@ -173,7 +173,16 @@ function TypeSection({ title, locale }: { title: string; locale: Locale }) {
         ))}
         <div className="flex flex-col gap-1 pb-3">
           <span className="text-xs text-muted">tabular (Readex Pro)</span>
-          <span className="font-tabular text-h3 tabular-nums text-primary">١٢٣٤٥ / 12345</span>
+          {/*
+           * Bidi note: two numeral runs (Arabic-Indic + Western) separated by
+           * "/" inside an RTL container can reorder unpredictably — numerals
+           * are a weak-directionality run. Isolate each with <bdi> so they
+           * render left-to-right internally regardless of surrounding
+           * context (rtl-component skill §7).
+           */}
+          <span className="font-tabular text-h3 tabular-nums text-primary">
+            <bdi>١٢٣٤٥</bdi> / <bdi>12345</bdi>
+          </span>
         </div>
       </div>
     </SectionShell>
