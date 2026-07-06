@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Send } from "lucide-react";
+import { Paperclip, Send } from "lucide-react";
 
 import { t, type Locale } from "@/lib/i18n";
 import { dirFor } from "@/lib/i18n/dir";
@@ -13,11 +13,32 @@ import { authedFetch, AuthedFetchError } from "@/lib/api/authed-fetch";
 import type { Cv } from "@/lib/schemas/cv";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { ChatBubble } from "@/components/chat/chat-bubble";
 import { QuickReplyChips } from "@/components/chat/quick-reply-chips";
 import { TypingIndicator } from "@/components/chat/typing-indicator";
 import { CvCard, CvCardSkeleton } from "@/components/cv/cv-card";
+
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024; // 4MB — mirrors lib/cv-upload/parse-upload.ts
+
+/** Read a File as a base64 string (no `data:` URL prefix). */
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error ?? new Error("file read failed"));
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== "string") {
+        reject(new Error("unexpected file reader result"));
+        return;
+      }
+      const commaIndex = result.indexOf(",");
+      resolve(commaIndex !== -1 ? result.slice(commaIndex + 1) : result);
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 /** The exact response shape the backend `POST /api/chat` route returns. */
 interface ChatApiResponse {
@@ -64,6 +85,14 @@ export default function ChatPage() {
   const [cv, setCv] = React.useState<Cv | null>(null);
   const [cvGenerating, setCvGenerating] = React.useState(false);
   const [sessionStatus, setSessionStatus] = React.useState<"active" | "completed">("active");
+
+  // Entry-choice card (PRD §6.1 step 3): a brand-new session offers "upload
+  // existing CV" or "start from scratch" before any greeting is requested.
+  // Defaults to true (card hidden) once either path is chosen or a session
+  // already has history — see the reset in handleRetry for the empty-history case.
+  const [entryChoiceMade, setEntryChoiceMade] = React.useState(false);
+  const [isUploading, setIsUploading] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const scrollAnchorRef = React.useRef<HTMLDivElement | null>(null);
   const hasRequestedGreeting = React.useRef(false);
@@ -142,10 +171,13 @@ export default function ChatPage() {
     }
   }, []);
 
-  // On mount (once authenticated), if there's no local history yet, request
-  // the initial greeting with an empty-string message per the API contract.
+  // Once authenticated with no local history yet, request the initial
+  // greeting with an empty-string message per the API contract — but only
+  // AFTER the candidate has made an entry choice ("start from scratch"; the
+  // "upload CV" path calls /api/cv-upload directly instead and skips this).
   React.useEffect(() => {
     if (authLoading || !user) return;
+    if (!entryChoiceMade) return;
     if (hasRequestedGreeting.current) return;
     if (messages.length > 0) return;
     hasRequestedGreeting.current = true;
@@ -156,7 +188,7 @@ export default function ChatPage() {
       if (data) applyResponse(data);
       setIsInitializing(false);
     })();
-  }, [authLoading, user, messages.length, sendToApi, applyResponse]);
+  }, [authLoading, user, entryChoiceMade, messages.length, sendToApi, applyResponse]);
 
   React.useEffect(() => {
     scrollAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -165,7 +197,7 @@ export default function ChatPage() {
   const handleSend = React.useCallback(
     async (rawText: string) => {
       const text = rawText.trim();
-      if (!text || isSending || sessionStatus === "completed") return;
+      if (!text || isSending || isUploading || sessionStatus === "completed") return;
 
       // Optimistic append of the user's message.
       setMessages((prev) => [
@@ -186,7 +218,84 @@ export default function ChatPage() {
       setCvGenerating(false);
       setIsSending(false);
     },
-    [isSending, sessionStatus, sendToApi, applyResponse, cv]
+    [isSending, isUploading, sessionStatus, sendToApi, applyResponse, cv]
+  );
+
+  const handleChooseScratch = React.useCallback(() => {
+    setEntryChoiceMade(true);
+  }, []);
+
+  const handleUploadFile = React.useCallback(
+    async (file: File) => {
+      setError(null);
+
+      if (file.type !== "application/pdf") {
+        toast({
+          variant: "destructive",
+          title: t(chatStrings.sendErrorTitle, LOCALE),
+          description: t(chatStrings.uploadErrorNotPdf, LOCALE),
+        });
+        return;
+      }
+      if (file.size > MAX_UPLOAD_BYTES) {
+        toast({
+          variant: "destructive",
+          title: t(chatStrings.sendErrorTitle, LOCALE),
+          description: t(chatStrings.uploadErrorTooLarge, LOCALE),
+        });
+        return;
+      }
+
+      // The upload path replaces the entry-choice card and greeting flow —
+      // /api/cv-upload's response IS the first turn of the session.
+      setEntryChoiceMade(true);
+      hasRequestedGreeting.current = true;
+      setIsUploading(true);
+      setIsInitializing(false);
+
+      try {
+        const file_base64 = await fileToBase64(file);
+        const res = await authedFetch("/api/cv-upload", {
+          method: "POST",
+          body: JSON.stringify({ file_base64, filename: file.name }),
+        });
+
+        if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as ChatApiErrorBody | null;
+          if (res.status === 429) {
+            toast({
+              variant: "warning",
+              title: t(chatStrings.rateLimitTitle, LOCALE),
+              description: t(chatStrings.rateLimitBody, LOCALE),
+            });
+          } else {
+            setError(body?.error?.message ?? { en: chatStrings.uploadErrorGeneric.en, ar: chatStrings.uploadErrorGeneric.ar });
+          }
+          return;
+        }
+
+        const data = (await res.json()) as ChatApiResponse;
+        applyResponse(data);
+      } catch (err) {
+        if (err instanceof AuthedFetchError) {
+          setError({ en: chatStrings.authRequiredBody.en, ar: chatStrings.authRequiredBody.ar });
+        } else {
+          setError({ en: chatStrings.uploadErrorGeneric.en, ar: chatStrings.uploadErrorGeneric.ar });
+        }
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [toast, applyResponse]
+  );
+
+  const handleFileInputChange = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = ""; // allow re-selecting the same file later
+      if (file) void handleUploadFile(file);
+    },
+    [handleUploadFile]
   );
 
   const handleRetry = React.useCallback(() => {
@@ -206,6 +315,11 @@ export default function ChatPage() {
       void handleSend(lastUserMessage.content);
     }
   }, [messages, sendToApi, applyResponse, handleSend]);
+
+  // Shown only for a genuinely new session: no history yet, no choice made,
+  // and neither the greeting nor an upload is already in flight.
+  const showEntryChoice =
+    !authLoading && !!user && !entryChoiceMade && messages.length === 0 && !isUploading;
 
   const lastAssistantMessage = [...messages].reverse().find((m) => m.role === "assistant");
   const showQuickReplies =
@@ -233,6 +347,36 @@ export default function ChatPage() {
 
         <div className="flex-1 overflow-y-auto pb-4">
           <div className="flex flex-col gap-4">
+            {showEntryChoice && (
+              <Card className="w-full">
+                <CardHeader>
+                  <CardTitle>{t(chatStrings.entryChoiceTitle, LOCALE)}</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex flex-col items-start gap-1 rounded-md border border-border bg-bg px-4 py-3 text-start transition-colors duration-fast hover:border-accent hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <span className="text-body font-medium text-primary">
+                      {t(chatStrings.entryChoiceUpload, LOCALE)}
+                    </span>
+                    <CardDescription>{t(chatStrings.entryChoiceUploadHint, LOCALE)}</CardDescription>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleChooseScratch}
+                    className="flex flex-col items-start gap-1 rounded-md border border-border bg-bg px-4 py-3 text-start transition-colors duration-fast hover:border-accent hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <span className="text-body font-medium text-primary">
+                      {t(chatStrings.entryChoiceScratch, LOCALE)}
+                    </span>
+                    <CardDescription>{t(chatStrings.entryChoiceScratchHint, LOCALE)}</CardDescription>
+                  </button>
+                </CardContent>
+              </Card>
+            )}
+
             {messages.map((msg) => (
               <React.Fragment key={msg.id}>
                 <ChatBubble
@@ -255,7 +399,7 @@ export default function ChatPage() {
               </React.Fragment>
             ))}
 
-            {(isInitializing || isSending) && (
+            {(isInitializing || isSending || isUploading) && (
               <div className="flex justify-start">
                 <TypingIndicator locale={LOCALE} />
               </div>
@@ -303,19 +447,39 @@ export default function ChatPage() {
             {t(chatStrings.composerPlaceholder, LOCALE)}
           </label>
           <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf"
+            className="sr-only"
+            onChange={handleFileInputChange}
+            aria-hidden
+            tabIndex={-1}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="md"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isSending || isUploading || sessionStatus === "completed" || isInitializing}
+            aria-label={t(chatStrings.uploadButtonLabel, LOCALE)}
+            title={t(chatStrings.uploadButtonLabel, LOCALE)}
+          >
+            <Paperclip className="h-5 w-5" aria-hidden />
+          </Button>
+          <input
             id="chat-composer"
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={t(chatStrings.composerPlaceholder, LOCALE)}
-            disabled={isSending || sessionStatus === "completed" || isInitializing}
+            disabled={isSending || isUploading || sessionStatus === "completed" || isInitializing}
             className="flex min-h-[44px] flex-1 rounded-sm border border-border bg-bg px-3 py-2 text-start text-body text-primary placeholder:text-muted transition-colors duration-fast focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:bg-border/40 disabled:text-muted"
           />
           <Button
             type="submit"
             variant="primary"
             size="md"
-            disabled={isSending || !input.trim() || sessionStatus === "completed" || isInitializing}
+            disabled={isSending || isUploading || !input.trim() || sessionStatus === "completed" || isInitializing}
             aria-label={t(chatStrings.send, LOCALE)}
           >
             {/* Send is a directional icon (points toward the composer's logical

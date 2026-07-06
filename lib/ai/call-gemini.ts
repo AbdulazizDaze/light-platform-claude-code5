@@ -35,9 +35,22 @@ const GEMINI_BASE_URL =
 
 export type GeminiRole = "user" | "model";
 
+/**
+ * Inline binary data (e.g. an uploaded CV PDF) attached to a single message
+ * part, per Gemini's `inline_data` content-part shape. Kept minimal and
+ * additive — existing `{ role, text }` messages are unaffected.
+ */
+export interface GeminiInlineData {
+  mimeType: string;
+  /** Base64-encoded bytes (no `data:` URL prefix). */
+  dataBase64: string;
+}
+
 export interface GeminiMessage {
   role: GeminiRole;
   text: string;
+  /** Optional inline data part (e.g. PDF bytes) appended alongside `text` on this turn. */
+  inlineData?: GeminiInlineData;
 }
 
 export interface CallGeminiOptions {
@@ -160,7 +173,12 @@ function buildRequestBody(opts: CallGeminiOptions): Record<string, unknown> {
     },
     contents: opts.messages.map((m) => ({
       role: m.role,
-      parts: [{ text: m.text }],
+      parts: [
+        { text: m.text },
+        ...(m.inlineData
+          ? [{ inline_data: { mime_type: m.inlineData.mimeType, data: m.inlineData.dataBase64 } }]
+          : []),
+      ],
     })),
     ...(Object.keys(generationConfig).length > 0 ? { generationConfig } : {}),
   };

@@ -74,4 +74,39 @@ export const chatStrings = {
     en: "Redirecting to registration...",
     ar: "جارٍ التحويل إلى صفحة التسجيل...",
   } satisfies LocalizedString,
+
+  // Entry-choice card (new session: upload existing CV vs. start from scratch)
+  entryChoiceTitle: {
+    en: "How would you like to start?",
+    ar: "كيف تحب تبدأ؟",
+  } satisfies LocalizedString,
+  entryChoiceUpload: { en: "Upload my CV", ar: "ارفع سيرتك الذاتية" } satisfies LocalizedString,
+  entryChoiceUploadHint: {
+    en: "We'll analyze it and help you improve it",
+    ar: "بنحللها ونساعدك تطورها",
+  } satisfies LocalizedString,
+  entryChoiceScratch: { en: "Start from scratch", ar: "ابدأ من الصفر" } satisfies LocalizedString,
+  entryChoiceScratchHint: {
+    en: "Build a new CV through conversation",
+    ar: "نبني سيرتك من خلال محادثة",
+  } satisfies LocalizedString,
+
+  // Upload affordance
+  uploadButtonLabel: { en: "Upload CV", ar: "رفع السيرة الذاتية" } satisfies LocalizedString,
+  uploadingLabel: {
+    en: "Analyzing your CV...",
+    ar: "جاري تحليل سيرتك الذاتية...",
+  } satisfies LocalizedString,
+  uploadErrorNotPdf: {
+    en: "Only PDF files are supported.",
+    ar: "يُقبل ملف PDF فقط.",
+  } satisfies LocalizedString,
+  uploadErrorTooLarge: {
+    en: "The file is too large. Please upload a PDF under 4MB.",
+    ar: "الملف كبير جداً. الرجاء رفع ملف أقل من 4 ميجابايت.",
+  } satisfies LocalizedString,
+  uploadErrorGeneric: {
+    en: "Couldn't upload your CV. Please try again.",
+    ar: "تعذّر رفع سيرتك الذاتية. الرجاء المحاولة مرة أخرى.",
+  } satisfies LocalizedString,
 } as const;
