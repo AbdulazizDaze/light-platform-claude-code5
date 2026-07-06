@@ -17,6 +17,7 @@ import {
 } from "@/lib/firebase/converters";
 import type { ChatMessage, ChatSession, ChatSessionStatusSchema, ChatSessionTypeSchema } from "@/lib/schemas/chat";
 import type { Cv } from "@/lib/schemas/cv";
+import type { PartialCv } from "@/lib/schemas/cv-state";
 import { computeProfileCompleteness } from "@/lib/profile/completeness";
 import type { z } from "zod";
 
@@ -121,6 +122,8 @@ export interface PersistTurnParams {
   userMessageContent: string | null;
   assistantReply: string;
   assistantQuickReplies: string[];
+  /** The accumulated CV extraction state after this turn (PRD v3 §5.2). Persisted for the next turn. */
+  cvState: PartialCv | null;
   cvGenerated: boolean;
   cvData: Cv | null;
   sessionType: ChatSessionType;
@@ -155,6 +158,7 @@ export async function persistTurn(
     userMessageContent,
     assistantReply,
     assistantQuickReplies,
+    cvState,
     cvGenerated,
     cvData,
     sessionType,
@@ -196,6 +200,7 @@ export async function persistTurn(
         messages: trimmedMessages,
         status,
         type: sessionType,
+        ...(cvState ? { cv_state: cvState } : {}),
         ...(cvData ? { cv_data: cvData } : {}),
       } as never,
       { merge: true },

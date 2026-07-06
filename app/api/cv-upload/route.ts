@@ -44,13 +44,14 @@ const BodySchema = z
 
 const CV_ANALYSIS_INSTRUCTION =
   "The candidate just uploaded their existing CV as a PDF (attached as inline data on this " +
-  "message). Analyze its content: extract their education, experience, skills, languages, and " +
-  "any other structured facts. Then respond as the FIRST turn of a cv_upload session per the " +
-  "OUTPUT PROTOCOL's normal conversational turn — do NOT emit the CV JSON yet. In Saudi-dialect " +
-  "Arabic (unless the CV is clearly for an English-speaking context), acknowledge what you found " +
-  "specifically, note concrete gaps or weak areas, and ask ONE targeted improvement question to " +
-  "start strengthening it. Do not restart from scratch or ask questions about facts already in " +
-  "the uploaded CV.";
+  "message). Build the INITIAL cv_state from the document: extract all education, experience, " +
+  "skills, languages, projects, and other structured facts into `state` exactly as the OUTPUT " +
+  "PROTOCOL specifies (infer skills from stated roles, tag inferred:true). Then, as the FIRST " +
+  "turn of a cv_upload session, write a gap-focused professional `reply` in Saudi Arabic (unless " +
+  "the CV is clearly English): acknowledge the document's strengths specifically, name the " +
+  "concrete gaps you still need (e.g. missing technical skills, languages, or target role), and " +
+  "ask one or two precise questions to fill them. Do NOT re-ask anything already in the CV. Keep " +
+  "`ready` false on this opening turn.";
 
 export async function POST(request: NextRequest) {
   try {
@@ -106,9 +107,10 @@ export async function POST(request: NextRequest) {
       userContext: {
         name: profile.name,
         gender: profile.gender,
-        messageCount: 0,
         sessionType: "cv_upload",
+        turnCount: 0,
       },
+      currentState: null,
       priorMessages: session.messages,
       newUserMessage: CV_ANALYSIS_INSTRUCTION,
       inlineData: {
@@ -125,6 +127,7 @@ export async function POST(request: NextRequest) {
       userMessageContent: null,
       assistantReply: turn.reply,
       assistantQuickReplies: turn.quickReplies,
+      cvState: turn.state,
       cvGenerated: turn.cvGenerated,
       cvData: turn.cvData,
       sessionType: "cv_upload",

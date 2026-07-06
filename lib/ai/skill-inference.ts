@@ -2,7 +2,7 @@
  * skill-inference.ts — a small DETERMINISTIC skill-inference helper.
  *
  * In production, the LLM does the real, nuanced inference during the
- * conversation (see base-prompt.ts "IMPLICIT SKILL INFERENCE"). This pure map
+ * conversation (see consultant-prompt.ts "IMPLICIT SKILL INFERENCE"). This pure map
  * exists for TESTING and as a fallback / seed for future features: it turns the
  * canonical PRD §18.C role mentions into a stable, testable set of skills so
  * behavior is consistent and verifiable without a live model.

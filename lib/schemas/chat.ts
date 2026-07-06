@@ -8,6 +8,7 @@
 import { z } from "zod";
 import { TimestampSchema } from "./common";
 import { CvSchema } from "./cv";
+import { PartialCvSchema } from "./cv-state";
 
 export const ChatRoleSchema = z.enum(["user", "assistant"]);
 
@@ -27,6 +28,8 @@ export const ChatSessionSchema = z.object({
   messages: z.array(ChatMessageSchema).default([]),
   status: ChatSessionStatusSchema,
   type: ChatSessionTypeSchema,
+  /** The accumulating extraction state (PRD v3 §5.2), persisted across turns. */
+  cv_state: PartialCvSchema.optional(),
   cv_data: CvSchema.optional(),
 });
 export type ChatSession = z.infer<typeof ChatSessionSchema>;

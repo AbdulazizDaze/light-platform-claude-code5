@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FakeFirestore, SERVER_TIMESTAMP_SENTINEL } from "@/lib/firebase/test-fakes/fake-admin-firestore";
 import type { ChatMessage } from "@/lib/schemas/chat";
 import type { Cv } from "@/lib/schemas/cv";
+import type { PartialCv } from "@/lib/schemas/cv-state";
 import { MAX_PERSISTED_MESSAGES } from "./session";
 
 // `session.ts` imports `FieldValue` from `firebase-admin/firestore` at module
@@ -20,6 +21,17 @@ vi.mock("node:crypto", () => ({
 }));
 
 const { loadOrCreateSession, createCvUploadSession, persistTurn } = await import("./session");
+
+const partialState: PartialCv = {
+  education: [{ institution: "جامعة الملك سعود", field: "إدارة أعمال", achievements: [] }],
+  experience: [],
+  projects: [],
+  skills: [{ name: "خدمة العملاء", inferred: true }],
+  languages: [],
+  certifications: [],
+  volunteer_work: [],
+  target_role: "أخصائي مبيعات",
+};
 
 const validCv: Cv = {
   professional_summary: { en: "Summary.", ar: "ملخص." },
@@ -124,6 +136,7 @@ describe("persistTurn", () => {
       userMessageContent: "أنا خريج",
       assistantReply: "ممتاز!",
       assistantQuickReplies: ["أ", "ب"],
+      cvState: partialState,
       cvGenerated: false,
       cvData: null,
       sessionType: "new",
@@ -138,6 +151,10 @@ describe("persistTurn", () => {
       quick_replies: ["أ", "ب"],
     });
 
+    // cv_state persisted on the session for the next turn (PRD v3 §5.2).
+    const session = db.raw("chat_sessions/uid-1") as Record<string, unknown>;
+    expect(session.cv_state).toEqual(partialState);
+
     // candidate_profiles must NOT be touched when no CV was generated.
     expect(db.raw("candidate_profiles/uid-1")).toBeUndefined();
   });
@@ -149,6 +166,7 @@ describe("persistTurn", () => {
       userMessageContent: null,
       assistantReply: "أهلاً وسهلاً!",
       assistantQuickReplies: [],
+      cvState: null,
       cvGenerated: false,
       cvData: null,
       sessionType: "new",
@@ -171,6 +189,7 @@ describe("persistTurn", () => {
       userMessageContent: null,
       assistantReply: "",
       assistantQuickReplies: [],
+      cvState: null,
       cvGenerated: true,
       cvData: validCv,
       sessionType: "new",
@@ -208,6 +227,7 @@ describe("persistTurn", () => {
       userMessageContent: null,
       assistantReply: "",
       assistantQuickReplies: [],
+      cvState: null,
       cvGenerated: true,
       cvData: validCv,
       sessionType: "new",
@@ -228,6 +248,7 @@ describe("persistTurn", () => {
       userMessageContent: null,
       assistantReply: "reply",
       assistantQuickReplies: [],
+      cvState: null,
       cvGenerated: true,
       cvData: null,
       sessionType: "new",
@@ -251,6 +272,7 @@ describe("persistTurn", () => {
       userMessageContent: "second message",
       assistantReply: "reply",
       assistantQuickReplies: [],
+      cvState: null,
       cvGenerated: false,
       cvData: null,
       sessionType: "returning",
@@ -276,6 +298,7 @@ describe("persistTurn", () => {
       userMessageContent: "new user message",
       assistantReply: "new assistant reply",
       assistantQuickReplies: [],
+      cvState: null,
       cvGenerated: false,
       cvData: null,
       sessionType: "returning",
@@ -305,6 +328,7 @@ describe("persistTurn", () => {
       userMessageContent: null,
       assistantReply: "final reply",
       assistantQuickReplies: [],
+      cvState: null,
       cvGenerated: false,
       cvData: null,
       sessionType: "returning",

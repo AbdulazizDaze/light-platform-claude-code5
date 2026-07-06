@@ -78,15 +78,16 @@ export async function POST(request: NextRequest) {
     }
 
     const isGreetingRequest = parsed.data.message.length === 0;
-    const messageCount = session.messages.length + (isGreetingRequest ? 0 : 1);
+    const turnCount = session.messages.length + (isGreetingRequest ? 0 : 1);
 
     const turn = await runConversationTurn({
       userContext: {
         name: profile.name,
         gender: profile.gender,
-        messageCount,
         sessionType: session.type,
+        turnCount,
       },
+      currentState: session.cv_state ?? null,
       priorMessages: session.messages,
       newUserMessage: isGreetingRequest ? null : parsed.data.message,
     });
@@ -97,6 +98,7 @@ export async function POST(request: NextRequest) {
       userMessageContent: isGreetingRequest ? null : parsed.data.message,
       assistantReply: turn.reply,
       assistantQuickReplies: turn.quickReplies,
+      cvState: turn.state,
       cvGenerated: turn.cvGenerated,
       cvData: turn.cvData,
       sessionType: session.type,
