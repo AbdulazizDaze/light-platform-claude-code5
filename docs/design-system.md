@@ -17,8 +17,10 @@ ad hoc in a component.
    and clarity over flashiness. Generous whitespace; one clear primary action per screen.
 3. **Conversation is the hero.** The chat and CvCard are the emotional core; give them focus (often
    full-screen, no chrome) and the most polish.
-4. **Green = Light's intelligence.** Jungle Green marks the AI, primary actions, and success. Use it
-   deliberately, not decoratively.
+4. **Amber = Light's energy.** The amber arrow marks the AI, primary actions, and moments of
+   progress; navy is the trusted foundation it rises from. Use amber deliberately, not decoratively —
+   dark navy sections with amber accents are the brand's signature moment. Green is semantic
+   success only, never brand.
 5. **Progressive disclosure.** Fresh graduates get overwhelmed — reveal complexity gradually (one
    question at a time in chat; expandable CV sections; simple recruiter one-liner first).
 6. **Accessible by default.** WCAG AA contrast, visible focus, 44px touch targets, reduced-motion honored.
@@ -31,23 +33,27 @@ Semantic tokens map to the brand palette. **Reference tokens, never raw hex, in 
 
 | Token | Value | Use |
 |---|---|---|
-| `--color-primary` (oxford) | `#14213D` | Primary text, dark surfaces, navbar |
-| `--color-accent` (jungle) | `#22AE89` | Primary action, AI identity, success, highlights |
-| `--color-warning` (orange) | `#FCA311` | Secondary accent, warnings, attention |
+| `--color-primary` (navy) | `#14213D` | Foundation: primary text, dark surfaces, navbar, wordmark |
+| `--color-primary-deep` | `#0D1730` | Dark-section gradients, footer, hero backdrop |
+| `--color-accent` (amber) | `#FCA311` | **The action color**: primary buttons (navy text on amber), AI identity, arrow motif, focus rings, glows |
+| `--color-accent-deep` | `#E08900` | Amber hover/active |
+| `--color-success` | `#1F9D66` | Success states ONLY (semantic, not brand) |
 | `--color-danger` (fire) | `#D62828` | Errors, destructive actions, urgent |
-| `--color-border` (platinum) | `#E3E3E3` | Borders, dividers, disabled |
+| `--color-border` | `#E5E7EC` | Borders, dividers, disabled |
 | `--color-bg` | `#FFFFFF` | Page background |
 | `--color-surface` | `#F7F8FA` | Cards/raised sections (subtle off-white) |
-| `--color-muted` | `#6B7280` | Secondary text, captions |
+| `--color-muted` | `#5B6474` | Secondary text, captions |
 
-**Derived states** (use Tailwind opacity or defined shades, not new hex): hover = base darkened ~8%,
-active = ~12%, focus ring = accent at 40% in a 2px outline, disabled = platinum bg + muted text.
+**Derived states** (use Tailwind opacity or defined shades, not new hex): amber hover =
+`--color-accent-deep`, active = darken ~12%, focus ring = amber at 40% in a 2px outline, disabled =
+border bg + muted text.
 
-**Contrast rules:** Oxford on white and white on Jungle/Oxford both pass AA. Never place Orange text on
-white for body copy (fails AA) — use it for fills/icons/borders, or Oxford text on an Orange fill.
+**Contrast rules:** Navy on white and white on Navy pass AA. **Amber is never body-text on white**
+(fails AA) — amber fills carry navy text (~8:1), and amber works as icon/border/glow, especially on
+navy. White text is allowed on amber only for xs badges at weight ≥600, prefer navy.
 
-**Semantic status colors:** success = jungle, warning = orange, error = fire, info = oxford. Match
-statuses and Nitaqat colors reuse these (see §9).
+**Semantic status colors:** success = `--color-success`, warning = amber, error = fire, info = navy.
+Match statuses and Nitaqat colors reuse these (see §9).
 
 > Dark mode is out of scope for M1/M2. Keep tokens in CSS variables so it can be added later without
 > touching components.
@@ -109,13 +115,13 @@ shadcn/ui gives us owned, Tailwind-based primitives (Radix under the hood). Setu
 - Keep primitives generic; Light-specific components (CvCard, ChatBubble, MatchCard) compose them and
   live in `components/` (not `components/ui/`).
 
-Wrap shadcn variants with Light's tokens so `<Button variant="default">` is already Jungle Green, etc.
+Wrap shadcn variants with Light's tokens so `<Button variant="default">` is already Amber-on-Navy, etc.
 
 ---
 
 ## 6. Core component specs
 
-**Button** — variants: `primary` (jungle fill, white text — the one main action), `secondary` (oxford
+**Button** — variants: `primary` (amber fill, NAVY text — the one main action; hover amber-deep with a subtle up-right arrow nudge when an arrow icon is present), `secondary` (navy
 outline), `ghost` (text only), `danger` (fire). Sizes: `sm` 32h, `md` 40h, `lg` 48h. States:
 hover/active darken; focus = accent ring; disabled = platinum. Icon+label uses logical gap; icon sits
 on the start side.
@@ -129,11 +135,11 @@ digits where appropriate.
 (actions align to the end/start per context).
 
 **Chat bubble** — **AI bubbles on the right, user on the left** (RTL-natural, opposite of Western
-apps). AI: surface/white bubble with a subtle jungle accent (avatar or start-border) signaling
+apps). AI: surface/white bubble with a subtle amber accent (avatar or start-border) signaling
 intelligence. User: oxford-tinted bubble. `body-lg`, generous padding, `lg` radius with one squared
-corner toward the speaker. Timestamps in `xs` muted. Typing indicator = three jungle dots.
+corner toward the speaker. Timestamps in `xs` muted. Typing indicator = three amber dots.
 
-**Quick-reply chips** — pill buttons under an AI message for suggested answers; `sm`, jungle outline,
+**Quick-reply chips** — pill buttons under an AI message for suggested answers; `sm`, amber outline with navy text,
 fill on hover. Wrap to multiple lines; keyboard-navigable.
 
 **CvCard** (hero component) — inline CV preview in chat. Collapsible sections (summary, experience,
@@ -141,11 +147,11 @@ education, skills, languages). AR/EN toggle (segmented control, top-start). Infe
 small "AI" badge to distinguish from stated skills. Actions: Download PDF (primary), Customize
 (secondary). Skeleton while generating.
 
-**Match card** (recruiter) — candidate name, fit **score ring** (0–100, jungle→orange→fire by band),
+**Match card** (recruiter) — candidate name, fit **score ring** (0–100, success→amber→fire by band),
 top strengths, gaps, Saudization badge when applicable, contact button. Component scores as a small
 bar breakdown. See §9.
 
-**Badge** — `sm`/`xs` pills. Semantic: success/warning/error/info + neutral. Saudization badge = jungle
+**Badge** — `sm`/`xs` pills. Semantic: success/warning/error/info + neutral. Saudization badge = success
 with a subtle mark; Nitaqat status badge uses the category color (§9).
 
 **Toast** — top (mobile) / corner (desktop), auto-dismiss, semantic color start-border, `sm` text.
@@ -179,24 +185,24 @@ spinners, for content. Error = plain-language bilingual message + retry.
 ## 9. Domain-specific patterns (Light)
 
 **Saudization / Nitaqat** (see `nitaqat-rules` skill):
-- Saudi-candidate badge in match results: jungle pill, "مرشح سعودي".
-- Nitaqat status colors: Platinum/Green → jungle, Yellow → orange, Red → fire. Use as badge fill or
+- Saudi-candidate badge in match results: success pill, "مرشح سعودي".
+- Nitaqat status colors: Platinum/Green → success, Yellow → amber, Red → fire. Use as badge fill or
   status dot; always pair color with text (never color alone — accessibility).
-- Nitaqat-boosted match: show "يحسّن النطاقات" note with the score, jungle accent.
+- Nitaqat-boosted match: show "يحسّن النطاقات" note with the score, amber accent.
 
-**Fit score** — 0–100 ring/number, banded: 80–100 jungle, 60–79 orange, <60 fire. Always accompany the
+**Fit score** — 0–100 ring/number, banded: 80–100 success, 60–79 amber, <60 fire. Always accompany the
 number with the strengths/gaps text so it's not a bare number.
 
 **Bilingual toggle** — segmented control (AR | EN); AR default. Placed top-start on CV/preview surfaces.
 
-**Skill chips** — stated skills = solid jungle-tint; inferred skills = outline + "AI" micro-badge.
+**Skill chips** — stated skills = solid navy-tint; inferred skills = amber outline + "AI" micro-badge.
 
 ---
 
 ## 10. Key screens (layout intent)
 
 - **Landing** — RTL hero: headline + subcopy + dual CTAs ("للباحثين عن عمل" primary, "لأصحاب العمل"
-  secondary), product mockup to the start side, trust strip. Calm, spacious, one dominant green CTA.
+  secondary), product mockup to the start side, trust strip. Dark navy hero with amber glow, one dominant amber CTA.
 - **Registration** — minimal single-column form (name, phone, city), big inputs, one primary button,
   reassurance copy ("مجاني تماماً").
 - **Candidate chat** — full-screen, message list centered ~680px, AI right/user left, quick-reply chips,

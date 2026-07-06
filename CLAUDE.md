@@ -87,16 +87,25 @@ New dependencies require a note in `docs/architecture.md` and reviewer sign-off.
 
 ---
 
-## 4. Brand + design tokens (use these exact values)
+## 4. Brand + design tokens (use these exact values — PRD v3 §9 is authoritative)
 
-Colors: Oxford Blue `#14213D` (primary text/dark), Jungle Green `#22AE89` (primary action / AI
-identity / success), Brand Orange `#FCA311` (secondary accent / warnings), Fire Red `#D62828`
-(errors/destructive), Platinum `#E3E3E3` (borders/dividers/disabled).
+**Logo:** navy LIGHT wordmark; the L is a corner bracket with an amber arrow rising through it at
+45°. The arrow is a system motif (bullets, CTAs, progress). Tagline: "Brightening Careers,
+Simplifying Hiring" · «مساعدك الذكي لسوق العمل السعودي».
 
-Fonts: **Alexandria** (primary UI + Arabic), **Readex Pro** (code/tables), **Noto Sans Arabic**
-(CV PDF print glyphs).
+Colors: **Navy** `#14213D` (foundation — headings, dark surfaces, wordmark; deep variant `#0D1730`
+for gradients/footer), **Amber** `#FCA311` (THE action color — primary buttons carry navy text on
+amber fill, AI identity accents, focus rings, glows; hover `#E08900`; never body-text on white),
+**Success** `#1F9D66` (semantic success ONLY — not a brand color), **Fire Red** `#D62828`
+(errors/destructive), Border `#E5E7EC`, Muted `#5B6474`, Surface `#F7F8FA`/white.
 
-Personality: professional but approachable; modern but not cold; Saudi-first but globally aware.
+Fonts: **Alexandria** (primary UI + Arabic), **Readex Pro** (code/tables/numerals), **Noto Sans
+Arabic** (CV PDF print glyphs).
+
+Personality: confident, energetic, professional — a sharp consultant, not a mascot. Dark navy
+sections with amber accents are the signature moment. Motion is part of the brand (fade-rise,
+arrow micro-animations, shimmer skeletons; reduced-motion honored). Arabic is the default language
+of every surface.
 
 UI is built on **shadcn/ui + Tailwind, RTL-first**, against the full **`docs/design-system.md`** (type
 and spacing scales, component specs, motion, a11y, screen layouts). Build against the system — do not
