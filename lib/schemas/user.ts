@@ -52,16 +52,28 @@ export type User = z.infer<typeof UserSchema>;
  * Shape accepted when a candidate registers (PRD §6.1 step 2: name, phone,
  * city only — everything else defaults). Server sets uid/role/created_at/
  * updated_at; this schema validates only the client-supplied subset.
+ *
+ * `.strict()` (security-review hardening): a client that sends identity
+ * fields (uid, role, ...) or any other unknown key must FAIL LOUDLY with a
+ * 400, not have them silently stripped. Silent stripping can mask a client
+ * bug or a spoofing attempt; a loud rejection surfaces it immediately.
+ *
+ * `consent_accepted` (PDPL, CLAUDE.md §3.7 / PRD §16.1): registration is the
+ * consent capture point. The API route stores the acceptance as a
+ * server-side timestamp (`consent_accepted_at`) — see app/api/register.
  */
-export const CandidateRegistrationSchema = z.object({
-  name: z.string().min(1),
-  phone: z.string().min(1),
-  city: CitySchema,
-  gender: GenderSchema,
-  nationality: NationalitySchema,
-  lang_pref: LangPrefSchema.default("ar"),
-  email: z.string().email().optional(),
-});
+export const CandidateRegistrationSchema = z
+  .object({
+    name: z.string().min(1),
+    phone: z.string().min(1),
+    city: CitySchema,
+    gender: GenderSchema,
+    nationality: NationalitySchema,
+    lang_pref: LangPrefSchema.default("ar"),
+    email: z.string().email().optional(),
+    consent_accepted: z.literal(true),
+  })
+  .strict();
 
 export type CandidateRegistration = z.infer<typeof CandidateRegistrationSchema>;
 

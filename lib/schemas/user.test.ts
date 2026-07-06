@@ -86,14 +86,19 @@ describe("UserSchema", () => {
 });
 
 describe("CandidateRegistrationSchema", () => {
-  it("accepts the minimal registration payload (name, phone, city)", () => {
-    const result = CandidateRegistrationSchema.safeParse({
+  function validRegistration() {
+    return {
       name: "Sarah Al-Qahtani",
       phone: "+966500000001",
       city: "Jeddah",
       gender: "female",
       nationality: "saudi",
-    });
+      consent_accepted: true as const,
+    };
+  }
+
+  it("accepts the minimal registration payload (name, phone, city, consent)", () => {
+    const result = CandidateRegistrationSchema.safeParse(validRegistration());
     expect(result.success).toBe(true);
     if (result.success) {
       // default lang_pref
@@ -101,23 +106,37 @@ describe("CandidateRegistrationSchema", () => {
     }
   });
 
-  it("does not accept identity fields like uid or role client-side", () => {
+  it("rejects registration without explicit PDPL consent", () => {
+    const payload = validRegistration() as Record<string, unknown>;
+    delete payload.consent_accepted;
+    const result = CandidateRegistrationSchema.safeParse(payload);
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects consent_accepted: false (must be literal true)", () => {
     const result = CandidateRegistrationSchema.safeParse({
-      name: "Sarah",
-      phone: "+966500000001",
-      city: "Jeddah",
-      gender: "female",
-      nationality: "saudi",
+      ...validRegistration(),
+      consent_accepted: false,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("FAILS LOUDLY (does not silently strip) when a client sends identity fields like uid or role", () => {
+    const result = CandidateRegistrationSchema.safeParse({
+      ...validRegistration(),
       uid: "should-not-be-here",
       role: "candidate",
     });
-    // .strict() is not on this schema by default object behavior in Zod 4
-    // ignores unknown keys unless made strict; assert the parsed output
-    // never carries them through regardless.
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect((result.data as Record<string, unknown>).uid).toBeUndefined();
-      expect((result.data as Record<string, unknown>).role).toBeUndefined();
-    }
+    // .strict() rejects unknown keys outright — a spoofing attempt or client
+    // bug must surface as a 400, not be quietly ignored.
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects any other unknown field (strict schema)", () => {
+    const result = CandidateRegistrationSchema.safeParse({
+      ...validRegistration(),
+      extra_field: "not allowed",
+    });
+    expect(result.success).toBe(false);
   });
 });
