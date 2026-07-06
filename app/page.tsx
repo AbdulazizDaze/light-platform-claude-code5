@@ -1,16 +1,29 @@
 import Link from "next/link";
-import { MessageCircle, Sparkles, Globe2 } from "lucide-react";
+import {
+  Sparkles,
+  Globe2,
+  Radar,
+  Zap,
+  MessageSquareText,
+  FileCheck2,
+  Radio,
+  PhoneCall,
+  ArrowUpLeft,
+} from "lucide-react";
 
 import { t } from "@/lib/i18n";
 import { appName } from "@/lib/i18n/strings/common";
 import { landingStrings as s } from "@/lib/i18n/strings/landing";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Logo } from "@/components/brand/logo";
+import { ChatDemo } from "@/components/landing/chat-demo";
+import { RevealOnView } from "@/components/landing/reveal-on-view";
 
 /**
- * Landing page (PRD §6.1, §10.4; docs/design-system.md §10).
+ * Landing page — v3 screen redesign (PRD §9, docs/design-system.md §10).
+ * Full dark-navy page: sticky nav, hero with self-typing chat demo, problem
+ * section, alternating journey steps, trust strip, final CTA band, footer.
  *
  * Static, server-rendered — no data fetching, so no empty/loading/error
  * states are needed here (that requirement applies to list/async surfaces).
@@ -19,11 +32,14 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export default function HomePage() {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-primary">
       <SiteHeader />
       <main className="flex-1">
         <Hero />
+        <ProblemSection />
+        <JourneySection />
         <TrustStrip />
+        <FinalCtaBand />
       </main>
       <SiteFooter />
     </div>
@@ -32,24 +48,42 @@ export default function HomePage() {
 
 function SiteHeader() {
   return (
-    <header className="border-b border-border">
+    <header className="sticky top-0 z-20 border-b border-white/10 bg-primary/90 backdrop-blur">
       <div className="mx-auto flex max-w-[1200px] items-center justify-between px-4 py-4 sm:px-6">
-        <span className="text-h3 font-bold text-primary">{t(appName, "ar")}</span>
-        <nav className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/register">{t(s.navForSeekers, "ar")}</Link>
-          </Button>
+        <Logo lang="ar" size="sm" onDark />
+        <nav className="hidden items-center gap-1 md:flex">
+          <a
+            href="#seekers"
+            className="rounded-md px-3 py-2 text-sm font-medium text-white/80 transition-colors duration-fast hover:bg-white/10 hover:text-white"
+          >
+            {t(s.navForSeekers, "ar")}
+          </a>
           <span
-            className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted"
+            className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-white/40"
             title={t(s.comingSoonTooltip, "ar")}
             aria-disabled="true"
           >
             {t(s.navForEmployers, "ar")}
-            <Badge variant="neutral" size="xs">
+            <Badge variant="warning" size="xs">
               {t(s.comingSoonBadge, "ar")}
             </Badge>
           </span>
+          <a
+            href="#features"
+            className="rounded-md px-3 py-2 text-sm font-medium text-white/80 transition-colors duration-fast hover:bg-white/10 hover:text-white"
+          >
+            {t(s.navFeatures, "ar")}
+          </a>
+          <a
+            href="#contact"
+            className="rounded-md px-3 py-2 text-sm font-medium text-white/80 transition-colors duration-fast hover:bg-white/10 hover:text-white"
+          >
+            {t(s.navContact, "ar")}
+          </a>
         </nav>
+        <Button variant="primary" size="sm" asChild>
+          <Link href="/register">{t(s.navCtaStart, "ar")}</Link>
+        </Button>
       </div>
     </header>
   );
@@ -57,142 +91,218 @@ function SiteHeader() {
 
 function Hero() {
   return (
-    <section className="mx-auto max-w-[1200px] px-4 py-12 sm:px-6 sm:py-20">
-      <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-        {/* Copy side (end side in RTL — reading starts here) */}
-        <div className="flex flex-col items-start gap-6 text-start">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
-            <Sparkles className="h-3.5 w-3.5" />
-            {t(s.heroEyebrow, "ar")}
-          </span>
+    <section
+      id="seekers"
+      className="relative overflow-hidden bg-gradient-to-b from-primary to-primary-deep"
+    >
+      {/* Subtle dot-grid texture */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.15]"
+        style={{
+          backgroundImage: "radial-gradient(white 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+        }}
+        aria-hidden="true"
+      />
 
-          <h1 className="text-display font-bold leading-tight text-primary">
-            {t(s.heroHeadline, "ar")}
-          </h1>
+      <div className="relative mx-auto max-w-[1200px] px-4 py-16 sm:px-6 sm:py-24">
+        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+          {/* Copy side (end side in RTL — reading starts here) */}
+          <div className="flex flex-col items-start gap-6 text-start">
+            <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+              </span>
+              {t(s.heroBadge, "ar")}
+            </span>
 
-          <p className="max-w-[560px] text-body-lg text-muted">{t(s.heroSubcopy, "ar")}</p>
+            <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl">
+              <span className="block text-white">{t(s.heroHeadlineLine1, "ar")}</span>
+              <span className="block text-accent">{t(s.heroHeadlineLine2, "ar")}</span>
+            </h1>
 
-          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-            <Button variant="primary" size="lg" asChild>
-              <Link href="/register">{t(s.ctaSeekersPrimary, "ar")}</Link>
-            </Button>
-            <div className="relative">
-              <Button
-                variant="secondary"
-                size="lg"
-                disabled
-                title={t(s.comingSoonTooltip, "ar")}
-                aria-disabled="true"
-                className="w-full sm:w-auto"
-              >
-                {t(s.ctaEmployersSecondary, "ar")}
+            <p className="max-w-[560px] text-body-lg text-white/70">{t(s.heroSubcopy, "ar")}</p>
+
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+              <Button variant="primary" size="lg" asChild>
+                <Link href="/register">{t(s.ctaSeekersPrimary, "ar")}</Link>
               </Button>
-              <Badge
-                variant="warning"
-                size="xs"
-                className="absolute -top-2 end-2 shadow-e1"
-              >
-                {t(s.comingSoonBadge, "ar")}
-              </Badge>
+              <div className="relative">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  disabled
+                  title={t(s.comingSoonTooltip, "ar")}
+                  aria-disabled="true"
+                  className="w-full border-white/30 !bg-transparent !text-white hover:!bg-white/10 disabled:!bg-transparent disabled:!text-white/50 sm:w-auto"
+                >
+                  {t(s.ctaEmployersSecondary, "ar")}
+                </Button>
+                <Badge variant="warning" size="xs" className="absolute -top-2 end-2 shadow-e1">
+                  {t(s.comingSoonBadge, "ar")}
+                </Badge>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Product mockup side (start side in RTL) */}
-        <div className="order-first lg:order-last">
-          <ChatPreviewMockup />
+          {/* Self-typing chat demo (start side in RTL) */}
+          <div className="order-first lg:order-last">
+            <ChatDemo locale="ar" />
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-/**
- * Lightweight, stylized chat-preview mockup built from existing primitives —
- * no raster images or external assets. Shows an AI turn + a user turn per the
- * chat convention (AI bubble on the right, user bubble on the left,
- * docs/design-system.md §6), followed by a generating CvCard skeleton.
- */
-function ChatPreviewMockup() {
+function ProblemSection() {
   return (
-    <Card className="mx-auto max-w-[440px] p-4 sm:p-6" aria-hidden="true">
-      <CardContent className="flex flex-col gap-4 p-0">
-        {/* AI message — bubbles on the right (start side in RTL) */}
-        <div className="flex items-start justify-start gap-2">
-          <span className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
-            <Sparkles className="h-4 w-4" />
-          </span>
-          <div className="rounded-lg rounded-ss-sm border-s-2 border-accent bg-bg px-4 py-3 shadow-e1">
-            <p className="text-sm text-primary">{t(s.mockupAiMessage, "ar")}</p>
-          </div>
-        </div>
+    <section className="bg-primary-deep py-16 sm:py-24">
+      <div className="mx-auto max-w-[1200px] px-4 sm:px-6">
+        <h2 className="mb-10 text-center text-h1 font-bold text-white sm:mb-14">
+          {t(s.problemHeading, "ar")}
+        </h2>
 
-        {/* User message — bubbles on the left (end side in RTL) */}
-        <div className="flex items-start justify-end">
-          <div className="max-w-[85%] rounded-lg rounded-ee-sm bg-primary/90 px-4 py-3 text-white">
-            <p className="text-sm">{t(s.mockupUserMessage, "ar")}</p>
-          </div>
-        </div>
-
-        {/* Inline CvCard preview, generating state */}
-        <div className="mt-2 rounded-lg border border-border bg-surface p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <Badge variant="success" size="xs">
-              <Sparkles className="h-3 w-3" />
-              {t(s.mockupCvBadge, "ar")}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
-            <div className="flex-1 flex-col gap-2">
-              <p className="text-sm font-semibold text-primary">{t(s.mockupCvName, "ar")}</p>
-              <p className="text-xs text-muted">{t(s.mockupCvRole, "ar")}</p>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <RevealOnView>
+            <div className="h-full rounded-lg border border-white/10 bg-white/5 p-6 sm:p-8">
+              <h3 className="mb-3 text-h3 font-semibold text-white">
+                {t(s.problemSeekersTitle, "ar")}
+              </h3>
+              <p className="mb-4 text-body text-white/70">{t(s.problemSeekersBody, "ar")}</p>
+              <ul className="flex flex-col gap-2">
+                <li className="flex items-start gap-2 text-sm text-white/70">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-danger" />
+                  {t(s.problemSeekersBullet1, "ar")}
+                </li>
+                <li className="flex items-start gap-2 text-sm text-white/70">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-danger" />
+                  {t(s.problemSeekersBullet2, "ar")}
+                </li>
+              </ul>
             </div>
-          </div>
-          <div className="mt-3 flex flex-col gap-2">
-            <Skeleton className="h-3 w-full" />
-            <Skeleton className="h-3 w-4/5" />
-            <Skeleton className="h-3 w-2/3" />
-          </div>
+          </RevealOnView>
+
+          <RevealOnView delayMs={100}>
+            <div className="h-full rounded-lg border border-white/10 bg-white/5 p-6 sm:p-8">
+              <h3 className="mb-3 text-h3 font-semibold text-white">
+                {t(s.problemEmployersTitle, "ar")}
+              </h3>
+              <p className="mb-4 text-body text-white/70">{t(s.problemEmployersBody, "ar")}</p>
+              <ul className="flex flex-col gap-2">
+                <li className="flex items-start gap-2 text-sm text-white/70">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                  {t(s.problemEmployersBullet1, "ar")}
+                </li>
+                <li className="flex items-start gap-2 text-sm text-white/70">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                  {t(s.problemEmployersBullet2, "ar")}
+                </li>
+              </ul>
+            </div>
+          </RevealOnView>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
+  );
+}
+
+interface JourneyStep {
+  icon: React.ReactNode;
+  title: { en: string; ar: string };
+  body: { en: string; ar: string };
+}
+
+function JourneySection() {
+  const steps: JourneyStep[] = [
+    { icon: <MessageSquareText className="h-6 w-6" />, title: s.journeyStep1Title, body: s.journeyStep1Body },
+    { icon: <FileCheck2 className="h-6 w-6" />, title: s.journeyStep2Title, body: s.journeyStep2Body },
+    { icon: <Radio className="h-6 w-6" />, title: s.journeyStep3Title, body: s.journeyStep3Body },
+    { icon: <PhoneCall className="h-6 w-6" />, title: s.journeyStep4Title, body: s.journeyStep4Body },
+  ];
+
+  return (
+    <section id="features" className="bg-primary py-16 sm:py-24">
+      <div className="mx-auto max-w-[1200px] px-4 sm:px-6">
+        <div className="mb-14 text-center">
+          <span className="mb-3 inline-block text-sm font-semibold uppercase tracking-wide text-accent">
+            {t(s.journeyEyebrow, "ar")}
+          </span>
+          <h2 className="text-h1 font-bold sm:text-4xl">
+            <span className="block text-white">{t(s.journeyHeadlineLine1, "ar")}</span>
+            <span className="block text-white/50">{t(s.journeyHeadlineLine2, "ar")}</span>
+          </h2>
+        </div>
+
+        <div className="flex flex-col gap-12 sm:gap-16">
+          {steps.map((step, i) => (
+            <RevealOnView key={i} delayMs={i * 80}>
+              <div
+                className={cnRow(i)}
+              >
+                <div className="flex-1 text-start">
+                  <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent/15 text-accent">
+                    {step.icon}
+                  </span>
+                  <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-accent">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className="mb-2 text-h2 font-semibold text-white">{t(step.title, "ar")}</h3>
+                  <p className="max-w-[440px] text-body text-white/70">{t(step.body, "ar")}</p>
+                </div>
+                <div className="flex-1">
+                  <JourneyVisual index={i} />
+                </div>
+              </div>
+            </RevealOnView>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Alternate the text/visual sides per row for visual rhythm. Logical-safe: uses flex-row-reverse toggled by index, no physical left/right. */
+function cnRow(index: number): string {
+  const base = "flex flex-col items-center gap-8 sm:gap-12 md:flex-row";
+  return index % 2 === 1 ? `${base} md:flex-row-reverse` : base;
+}
+
+/** Simple abstract visual built from primitives (logomark arrow motif) — no images. */
+function JourneyVisual({ index }: { index: number }) {
+  return (
+    <div className="relative flex h-40 w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] sm:h-48">
+      <div className="absolute -inset-4 rounded-xl bg-accent/10 blur-2xl" aria-hidden="true" />
+      <ArrowUpLeft
+        className="relative h-16 w-16 text-accent/70 rtl:-scale-x-100"
+        strokeWidth={1.5}
+        aria-hidden="true"
+      />
+      <span className="absolute bottom-3 end-3 text-xs font-medium text-white/30">
+        {String(index + 1).padStart(2, "0")}
+      </span>
+    </div>
   );
 }
 
 function TrustStrip() {
-  const items: Array<{
-    icon: React.ReactNode;
-    title: (typeof s)[keyof typeof s];
-    body: (typeof s)[keyof typeof s];
-  }> = [
-    {
-      icon: <MessageCircle className="h-5 w-5" />,
-      title: s.trustConversationalTitle,
-      body: s.trustConversationalBody,
-    },
-    {
-      icon: <Globe2 className="h-5 w-5" />,
-      title: s.trustBilingualTitle,
-      body: s.trustBilingualBody,
-    },
-    {
-      icon: <Sparkles className="h-5 w-5" />,
-      title: s.trustPassiveTitle,
-      body: s.trustPassiveBody,
-    },
+  const items: Array<{ icon: React.ReactNode; title: { en: string; ar: string }; body: { en: string; ar: string } }> = [
+    { icon: <Globe2 className="h-5 w-5" />, title: s.trustBilingualTitle, body: s.trustBilingualBody },
+    { icon: <Zap className="h-5 w-5" />, title: s.trustMatchingTitle, body: s.trustMatchingBody },
+    { icon: <Radar className="h-5 w-5" />, title: s.trustRealtimeTitle, body: s.trustRealtimeBody },
   ];
 
   return (
-    <section className="border-t border-border bg-surface">
+    <section className="border-t border-white/10 bg-primary-deep">
       <div className="mx-auto grid max-w-[1200px] gap-6 px-4 py-12 sm:grid-cols-3 sm:px-6 sm:py-16">
         {items.map((item, i) => (
           <div key={i} className="flex flex-col items-start gap-3 text-start">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 text-accent">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-accent">
               {item.icon}
             </span>
-            <h3 className="text-h3 font-semibold text-primary">{t(item.title, "ar")}</h3>
-            <p className="text-sm text-muted">{t(item.body, "ar")}</p>
+            <h3 className="text-h3 font-semibold text-white">{t(item.title, "ar")}</h3>
+            <p className="text-sm text-white/60">{t(item.body, "ar")}</p>
           </div>
         ))}
       </div>
@@ -200,14 +310,29 @@ function TrustStrip() {
   );
 }
 
+function FinalCtaBand() {
+  return (
+    <section id="contact" className="bg-primary-deep py-16 sm:py-20">
+      <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-6 px-4 text-center sm:px-6">
+        <h2 className="max-w-[640px] text-h1 font-bold text-white sm:text-4xl">
+          {t(s.finalCtaHeadline, "ar")}
+        </h2>
+        <Button variant="primary" size="lg" asChild>
+          <Link href="/register">{t(s.finalCtaButton, "ar")}</Link>
+        </Button>
+      </div>
+    </section>
+  );
+}
+
 function SiteFooter() {
   return (
-    <footer className="border-t border-border">
-      <div className="mx-auto flex max-w-[1200px] flex-col gap-2 px-4 py-8 text-start sm:px-6">
-        <span className="text-sm font-semibold text-primary">{t(appName, "ar")}</span>
-        <p className="text-xs text-muted">{t(s.footerTagline, "ar")}</p>
-        <p className="text-xs text-muted">{t(s.footerPrivacyNote, "ar")}</p>
-        <p className="text-xs text-muted">
+    <footer className="border-t border-white/10 bg-primary-deep">
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-3 px-4 py-8 text-start sm:px-6">
+        <Logo lang="ar" size="sm" onDark />
+        <p className="text-xs text-white/50">{t(s.footerTagline, "ar")}</p>
+        <p className="text-xs text-white/50">{t(s.footerPrivacyNote, "ar")}</p>
+        <p className="text-xs text-white/50">
           © {new Date().getFullYear()} {t(appName, "ar")} — {t(s.footerRights, "ar")}
         </p>
       </div>

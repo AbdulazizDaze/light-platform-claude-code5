@@ -3,11 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FileText, Gauge, Radar, Sparkles } from "lucide-react";
+import { FileText, Gauge, Radar, Sparkles, ArrowUpLeft } from "lucide-react";
 
 import { t, type Locale } from "@/lib/i18n";
 import { dirFor } from "@/lib/i18n/dir";
-import { appName } from "@/lib/i18n/strings/common";
 import {
   dashboardStrings as s,
   cvTemplateLabels,
@@ -22,6 +21,8 @@ import type { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Logo } from "@/components/brand/logo";
+import { cn } from "@/lib/utils";
 
 const LOCALE: Locale = "ar";
 
@@ -70,9 +71,7 @@ export default function DashboardPage() {
     <div dir={dir} className="flex min-h-screen flex-col bg-bg">
       <DashboardHeader />
 
-      <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-8 sm:px-6">
-        <h1 className="mb-6 text-h1 font-semibold text-primary">{t(s.pageTitle, LOCALE)}</h1>
-
+      <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-8 pt-6 sm:px-6 sm:-mt-4">
         {hasError && <ErrorState />}
 
         {!hasError && isLoading && <DashboardSkeleton />}
@@ -94,22 +93,40 @@ export default function DashboardPage() {
 
 function DashboardHeader() {
   return (
-    <header className="border-b border-border">
+    <header className="bg-primary">
       <div className="mx-auto flex max-w-[1200px] items-center justify-between px-4 py-4 sm:px-6">
-        <Link href="/" className="text-h3 font-bold text-primary">
-          {t(appName, LOCALE)}
+        <Link href="/">
+          <Logo lang="ar" size="sm" onDark />
         </Link>
         <nav className="flex items-center gap-1 sm:gap-2">
-          <Button variant="ghost" size="sm" asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="!text-white/80 hover:!bg-white/10 hover:!text-white"
+          >
             <Link href="/dashboard">{t(dashboardStringsNav.navDashboard, LOCALE)}</Link>
           </Button>
-          <Button variant="ghost" size="sm" asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="!text-white/80 hover:!bg-white/10 hover:!text-white"
+          >
             <Link href="/chat">{t(dashboardStringsNav.navChat, LOCALE)}</Link>
           </Button>
-          <Button variant="ghost" size="sm" asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="!text-white/80 hover:!bg-white/10 hover:!text-white"
+          >
             <Link href="/cv">{t(dashboardStringsNav.navCv, LOCALE)}</Link>
           </Button>
         </nav>
+      </div>
+      <div className="mx-auto max-w-[1200px] px-4 pb-8 pt-2 sm:px-6">
+        <h1 className="text-h1 font-semibold text-white">{t(s.pageTitle, LOCALE)}</h1>
       </div>
     </header>
   );
@@ -144,6 +161,58 @@ function formatLastActivity(profile: CandidateProfile | null): string | null {
   }).format(date);
 }
 
+/** Icon chip: amber-tinted rounded background behind a card-header icon (docs/design-system.md §9 "arrow as a system motif" — used generally for icon accents). */
+function IconChip({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+      {children}
+    </span>
+  );
+}
+
+/**
+ * Quick-action row: arrow-motif navigation row (docs/design-system.md §9 "the
+ * arrow as a system motif"; PRD §9.4 dashboard intent "arrow-motif quick
+ * actions"). The arrow nudges up-right on hover/focus via the shared
+ * `arrow-nudge` keyframe, mirrored in RTL since ArrowUpRight is directional.
+ */
+function QuickActionRow({
+  href,
+  label,
+  disabled = false,
+}: {
+  href: string;
+  label: string;
+  disabled?: boolean;
+}) {
+  const content = (
+    <>
+      <span className="text-body font-medium text-primary">{label}</span>
+      <ArrowUpLeft
+        className="h-4 w-4 text-accent transition-transform duration-fast rtl:-scale-x-100 group-hover:animate-arrow-nudge"
+        aria-hidden
+      />
+    </>
+  );
+
+  const rowClass =
+    "group flex items-center justify-between gap-2 rounded-md px-2 py-2.5 text-start transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
+  if (disabled) {
+    return (
+      <span className={cn(rowClass, "cursor-not-allowed text-muted [&_span]:text-muted [&_svg]:text-muted")}>
+        {content}
+      </span>
+    );
+  }
+
+  return (
+    <Link href={href} className={cn(rowClass, "hover:bg-primary/5")}>
+      {content}
+    </Link>
+  );
+}
+
 function CvStatusCard({ profile, hasCv }: { profile: CandidateProfile | null; hasCv: boolean }) {
   const lastActivity = formatLastActivity(profile);
   const template = (profile?.cv_template ?? "classic") as CvTemplate;
@@ -152,7 +221,9 @@ function CvStatusCard({ profile, hasCv }: { profile: CandidateProfile | null; ha
   return (
     <Card>
       <CardHeader className="flex flex-row items-center gap-3 space-y-0">
-        <FileText className="h-5 w-5 text-accent" aria-hidden />
+        <IconChip>
+          <FileText className="h-5 w-5" aria-hidden />
+        </IconChip>
         <CardTitle>{t(s.cvCardTitle, LOCALE)}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
@@ -230,7 +301,9 @@ function CompletenessCard({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center gap-3 space-y-0">
-        <Gauge className="h-5 w-5 text-accent" aria-hidden />
+        <IconChip>
+          <Gauge className="h-5 w-5" aria-hidden />
+        </IconChip>
         <CardTitle>{t(s.completenessCardTitle, LOCALE)}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-start gap-3">
@@ -273,7 +346,9 @@ function DiscoverabilityCard({ hasCv }: { hasCv: boolean }) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center gap-3 space-y-0">
-        <Radar className="h-5 w-5 text-accent" aria-hidden />
+        <IconChip>
+          <Radar className="h-5 w-5" aria-hidden />
+        </IconChip>
         <CardTitle>{t(s.discoverabilityCardTitle, LOCALE)}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
@@ -290,19 +365,15 @@ function QuickActionsCard({ hasCv }: { hasCv: boolean }) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center gap-3 space-y-0">
-        <Sparkles className="h-5 w-5 text-accent" aria-hidden />
+        <IconChip>
+          <Sparkles className="h-5 w-5" aria-hidden />
+        </IconChip>
         <CardTitle>{t(s.quickActionsCardTitle, LOCALE)}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-        <Button variant="secondary" size="sm" asChild className="w-full sm:w-auto">
-          <Link href="/chat">{t(s.actionUpdateCv, LOCALE)}</Link>
-        </Button>
-        <Button variant="secondary" size="sm" disabled={!hasCv} asChild={hasCv} className="w-full sm:w-auto">
-          {hasCv ? <Link href="/cv">{t(s.actionDownloadPdf, LOCALE)}</Link> : <span>{t(s.actionDownloadPdf, LOCALE)}</span>}
-        </Button>
-        <Button variant="secondary" size="sm" disabled={!hasCv} asChild={hasCv} className="w-full sm:w-auto">
-          {hasCv ? <Link href="/cv">{t(s.actionCustomize, LOCALE)}</Link> : <span>{t(s.actionCustomize, LOCALE)}</span>}
-        </Button>
+      <CardContent className="flex flex-col gap-1">
+        <QuickActionRow href="/chat" label={t(s.actionUpdateCv, LOCALE)} />
+        <QuickActionRow href="/cv" label={t(s.actionDownloadPdf, LOCALE)} disabled={!hasCv} />
+        <QuickActionRow href="/cv" label={t(s.actionCustomize, LOCALE)} disabled={!hasCv} />
       </CardContent>
     </Card>
   );

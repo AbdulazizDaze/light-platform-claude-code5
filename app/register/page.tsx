@@ -3,10 +3,9 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowUpLeft } from "lucide-react";
 
 import { t } from "@/lib/i18n";
-import { appName } from "@/lib/i18n/strings/common";
 import { registerStrings as s } from "@/lib/i18n/strings/register";
 import { SAUDI_CITIES, type City } from "@/lib/schemas/common";
 import type { CandidateRegistration } from "@/lib/schemas/user";
@@ -16,8 +15,8 @@ import { authedFetch } from "@/lib/api/authed-fetch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Logo } from "@/components/brand/logo";
 import {
   Select,
   SelectContent,
@@ -167,18 +166,36 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-[560px] flex-col justify-center px-4 py-12 sm:px-6">
-      <Card>
-        <CardHeader className="items-start gap-3 text-start">
-          <span className="text-sm font-semibold text-accent">{t(appName, "ar")}</span>
-          <CardTitle>{t(s.pageTitle, "ar")}</CardTitle>
-          <CardDescription>{t(s.pageSubtitle, "ar")}</CardDescription>
-          <Badge variant="success" size="sm">
+    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
+      {/* Value panel — navy, start side in RTL (renders first on mobile too, as a compact header block). */}
+      <div className="flex flex-col justify-center bg-gradient-to-b from-primary to-primary-deep px-6 py-10 sm:px-10 lg:py-16">
+        <div className="mx-auto flex w-full max-w-[440px] flex-col items-start gap-6 text-start">
+          <Logo lang="ar" size="md" onDark />
+          <h1 className="hidden text-h1 font-bold text-white lg:block lg:text-4xl">
+            {t(s.pageTitle, "ar")}
+          </h1>
+          <p className="hidden text-body-lg text-white/70 lg:block">{t(s.pageSubtitle, "ar")}</p>
+
+          <ul className="flex flex-col gap-3">
+            {[s.valueBullet1, s.valueBullet2, s.valueBullet3].map((bullet, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-body text-white/85">
+                <ArrowUpLeft className="mt-0.5 h-5 w-5 shrink-0 text-accent rtl:-scale-x-100" aria-hidden />
+                {t(bullet, "ar")}
+              </li>
+            ))}
+          </ul>
+
+          <Badge variant="warning" size="sm">
             {t(s.freeReassurance, "ar")}
           </Badge>
-        </CardHeader>
+        </div>
+      </div>
 
-        <CardContent>
+      {/* Form panel — white, end side in RTL. */}
+      <div className="flex flex-col justify-center px-4 py-10 sm:px-6 lg:px-10">
+        <div className="mx-auto w-full max-w-[440px]">
+          <h2 className="mb-1 text-h3 font-semibold text-primary lg:hidden">{t(s.pageTitle, "ar")}</h2>
+          <p className="mb-6 text-sm text-muted lg:hidden">{t(s.pageSubtitle, "ar")}</p>
           <form className="flex flex-col gap-5" onSubmit={handleSubmit} noValidate>
             {/* Name */}
             <div className="flex flex-col gap-1.5">
@@ -367,8 +384,8 @@ export default function RegisterPage() {
               )}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

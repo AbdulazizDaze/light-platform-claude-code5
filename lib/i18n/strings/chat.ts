@@ -41,6 +41,10 @@ export const chatStrings = {
 
   // Page chrome
   pageTitle: { en: "Chat with Light", ar: "محادثة مع لايت" } satisfies LocalizedString,
+  headerStatusLine: {
+    en: "Your career consultant",
+    ar: "مستشارك المهني",
+  } satisfies LocalizedString,
 
   // CvCard
   cvHeading: { en: "Your CV", ar: "سيرتك الذاتية" } satisfies LocalizedString,

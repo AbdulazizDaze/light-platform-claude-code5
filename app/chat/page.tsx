@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Paperclip, Send } from "lucide-react";
+import { Paperclip, Send, Upload, PenLine } from "lucide-react";
 
 import { t, type Locale } from "@/lib/i18n";
 import { dirFor } from "@/lib/i18n/dir";
@@ -13,12 +13,13 @@ import { authedFetch, AuthedFetchError } from "@/lib/api/authed-fetch";
 import type { Cv } from "@/lib/schemas/cv";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { CardDescription } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { ChatBubble } from "@/components/chat/chat-bubble";
 import { QuickReplyChips } from "@/components/chat/quick-reply-chips";
 import { TypingIndicator } from "@/components/chat/typing-indicator";
 import { CvCard, CvCardSkeleton } from "@/components/cv/cv-card";
+import { LogoMark } from "@/components/brand/logo-mark";
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024; // 4MB — mirrors lib/cv-upload/parse-upload.ts
 
@@ -349,26 +350,36 @@ export default function ChatPage() {
   }
 
   return (
-    <main dir={dir} className="flex min-h-screen flex-col bg-bg">
-      <div className="mx-auto flex w-full max-w-[680px] flex-1 flex-col px-4">
-        <header className="py-4">
-          <h1 className="text-h2 font-semibold text-primary">{t(chatStrings.pageTitle, LOCALE)}</h1>
-        </header>
+    <main dir={dir} className="flex min-h-screen flex-col bg-surface">
+      {/* Navy header bar (PRD §9.4 "Chat"): logomark + wordmark + status line. */}
+      <header className="border-b border-white/10 bg-primary">
+        <div className="mx-auto flex w-full max-w-[680px] items-center gap-3 px-4 py-3">
+          <LogoMark size={28} bracketColor="currentColor" className="text-white" />
+          <div className="flex flex-col">
+            <h1 className="text-h3 font-semibold text-white">{t(chatStrings.pageTitle, LOCALE)}</h1>
+            <p className="text-xs text-white/60">{t(chatStrings.headerStatusLine, LOCALE)}</p>
+          </div>
+        </div>
+      </header>
 
-        <div className="flex-1 overflow-y-auto pb-4">
+      <div className="mx-auto flex w-full max-w-[680px] flex-1 flex-col px-4">
+        <div className="flex-1 overflow-y-auto py-4">
           <div className="flex flex-col gap-4">
             {showEntryChoice && (
-              <Card className="w-full">
-                <CardHeader>
-                  <CardTitle>{t(chatStrings.entryChoiceTitle, LOCALE)}</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-3 sm:grid-cols-2">
+              <div className="w-full animate-fade-rise">
+                <h2 className="mb-3 text-h3 font-semibold text-primary">
+                  {t(chatStrings.entryChoiceTitle, LOCALE)}
+                </h2>
+                <div className="grid gap-3 sm:grid-cols-2">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex flex-col items-start gap-1 rounded-md border border-border bg-bg px-4 py-3 text-start transition-colors duration-fast hover:border-accent hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex flex-col items-start gap-2 rounded-lg border border-border bg-bg p-5 text-start shadow-e1 transition-all duration-fast hover:-translate-y-0.5 hover:border-accent hover:shadow-e2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <span className="text-body font-medium text-primary">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 text-accent">
+                      <Upload className="h-5 w-5" aria-hidden />
+                    </span>
+                    <span className="text-body font-semibold text-primary">
                       {t(chatStrings.entryChoiceUpload, LOCALE)}
                     </span>
                     <CardDescription>{t(chatStrings.entryChoiceUploadHint, LOCALE)}</CardDescription>
@@ -376,25 +387,30 @@ export default function ChatPage() {
                   <button
                     type="button"
                     onClick={handleChooseScratch}
-                    className="flex flex-col items-start gap-1 rounded-md border border-border bg-bg px-4 py-3 text-start transition-colors duration-fast hover:border-accent hover:bg-accent/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex flex-col items-start gap-2 rounded-lg border border-border bg-bg p-5 text-start shadow-e1 transition-all duration-fast hover:-translate-y-0.5 hover:border-accent hover:shadow-e2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <span className="text-body font-medium text-primary">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 text-accent">
+                      <PenLine className="h-5 w-5" aria-hidden />
+                    </span>
+                    <span className="text-body font-semibold text-primary">
                       {t(chatStrings.entryChoiceScratch, LOCALE)}
                     </span>
                     <CardDescription>{t(chatStrings.entryChoiceScratchHint, LOCALE)}</CardDescription>
                   </button>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
             {messages.map((msg) => (
               <React.Fragment key={msg.id}>
-                <ChatBubble
-                  role={msg.role}
-                  content={msg.content}
-                  timestamp={msg.timestamp}
-                  locale={LOCALE}
-                />
+                <div className="animate-fade-rise">
+                  <ChatBubble
+                    role={msg.role}
+                    content={msg.content}
+                    timestamp={msg.timestamp}
+                    locale={LOCALE}
+                  />
+                </div>
                 {msg.role === "assistant" &&
                   msg.id === lastAssistantMessage?.id &&
                   showQuickReplies && (
@@ -424,9 +440,12 @@ export default function ChatPage() {
             )}
 
             {cv && (
-              <div className="flex justify-start w-full">
-                <div className="w-full">
-                  <CvCard cv={cv} locale={LOCALE} />
+              <div className="flex w-full justify-start animate-fade-rise">
+                <div className="relative w-full">
+                  <div className="pointer-events-none absolute -inset-2 rounded-xl bg-accent/10 blur-xl" aria-hidden="true" />
+                  <div className="relative">
+                    <CvCard cv={cv} locale={LOCALE} />
+                  </div>
                 </div>
               </div>
             )}

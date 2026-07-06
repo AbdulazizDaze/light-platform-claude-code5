@@ -20,6 +20,20 @@ export const registerStrings = {
     ar: "مجاني تماماً",
   },
 
+  // Value panel bullets (v3 split registration layout)
+  valueBullet1: {
+    en: "Build a professional CV through conversation, in minutes",
+    ar: "ابنِ سيرة ذاتية احترافية من خلال محادثة، خلال دقائق",
+  } satisfies LocalizedString,
+  valueBullet2: {
+    en: "A bilingual CV, generated automatically",
+    ar: "سيرة ذاتية ثنائية اللغة، تُنشأ تلقائياً",
+  } satisfies LocalizedString,
+  valueBullet3: {
+    en: "Let matching opportunities find you — no more endless applying",
+    ar: "خلّ الفرص المناسبة تلقاك — بدون تقديم متكرر",
+  } satisfies LocalizedString,
+
   // Fields
   nameLabel: { en: "Full name", ar: "الاسم الكامل" } satisfies LocalizedString,
   namePlaceholder: {

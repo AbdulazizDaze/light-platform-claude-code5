@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { CvPreview, CvPreviewSkeleton } from "@/components/cv/cv-preview";
 import { CvCustomizer, type CvCustomizerValue, type SaveStatus } from "@/components/cv/cv-customizer";
+import { LogoMark } from "@/components/brand/logo-mark";
 
 type PageState = "loading" | "empty" | "error" | "ready";
 
@@ -314,7 +315,8 @@ export default function CvPage() {
   return (
     <main dir={dir} className="min-h-screen bg-bg pb-24 sm:pb-0">
       <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-4 py-6 sm:px-6">
-        <header>
+        <header className="flex items-center gap-3">
+          <LogoMark size={28} />
           <h1 className="text-h1 font-semibold text-primary">{tr("pageTitle")}</h1>
         </header>
 
@@ -369,7 +371,8 @@ function CvPageSkeleton({ dir, title }: { dir: "rtl" | "ltr"; title: string }) {
   return (
     <main dir={dir} className="min-h-screen bg-bg pb-24 sm:pb-0">
       <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-4 py-6 sm:px-6">
-        <header>
+        <header className="flex items-center gap-3">
+          <LogoMark size={28} />
           <h1 className="text-h1 font-semibold text-primary">{title}</h1>
         </header>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_0.8fr]">
