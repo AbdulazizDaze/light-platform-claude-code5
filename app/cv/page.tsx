@@ -11,7 +11,7 @@ import { cvStrings } from "@/lib/i18n/strings/cv";
 import { useAuth } from "@/lib/firebase/auth-context";
 import { db } from "@/lib/firebase/client";
 import { candidateProfilesClientConverter } from "@/lib/firebase/converters";
-import { authedFetch, AuthedFetchError } from "@/lib/api/authed-fetch";
+import { authedFetch } from "@/lib/api/authed-fetch";
 import type { CandidateProfile } from "@/lib/schemas/profile";
 import { CV_THEMES, type CvColorTheme, type CvTemplate } from "@/lib/cv/themes";
 
@@ -24,6 +24,25 @@ import { CvCustomizer, type CvCustomizerValue, type SaveStatus } from "@/compone
 type PageState = "loading" | "empty" | "error" | "ready";
 
 const DEBOUNCE_MS = 800;
+
+/**
+ * Fire the debounced `candidate_profiles/{uid}` customization update.
+ * Module-level (not a closure) so both the debounce-timer callback and the
+ * unmount-flush effect can call the identical write path.
+ */
+async function writeCustomization(
+  uid: string,
+  payload: Partial<CandidateProfile>,
+  setSaveStatus: (status: SaveStatus) => void
+): Promise<void> {
+  try {
+    const ref = doc(db, "candidate_profiles", uid).withConverter(candidateProfilesClientConverter);
+    await updateDoc(ref, payload);
+    setSaveStatus("saved");
+  } catch {
+    setSaveStatus("error");
+  }
+}
 
 /**
  * /cv — full CV customization page (docs/design-system.md §10, PRD §6.1
@@ -57,6 +76,12 @@ export default function CvPage() {
 
   const debounceTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFirstCustomizerSet = React.useRef(true);
+  // Latest pending customization write, kept so the unmount cleanup can flush
+  // it (fire-and-forget) instead of silently discarding it if the candidate
+  // navigates away inside the debounce window.
+  const pendingWriteRef = React.useRef<{ uid: string; payload: Partial<CandidateProfile> } | null>(
+    null
+  );
 
   // Require auth: redirect unauthenticated visitors to /register once the
   // auth context has resolved (mirrors app/chat/page.tsx).
@@ -127,25 +152,22 @@ export default function CvPage() {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     setSaveStatus("saving");
 
+    const update: Partial<CandidateProfile> = {
+      cv_template: customizer.template,
+      cv_color_theme: customizer.theme,
+    };
+    if (customizer.theme === "custom") {
+      update.cv_custom_colors = customizer.customColors;
+    }
+    // Keep the latest pending payload in a ref so the separate unmount-only
+    // effect below can flush it if the candidate navigates away before the
+    // debounce timer fires — this effect's own cleanup runs on every
+    // `customizer` change (not just unmount), so it must NOT flush here.
+    pendingWriteRef.current = { uid: user.uid, payload: update };
+
     debounceTimer.current = setTimeout(() => {
-      (async () => {
-        try {
-          const ref = doc(db, "candidate_profiles", user.uid).withConverter(
-            candidateProfilesClientConverter
-          );
-          const update: Partial<CandidateProfile> = {
-            cv_template: customizer.template,
-            cv_color_theme: customizer.theme,
-          };
-          if (customizer.theme === "custom") {
-            update.cv_custom_colors = customizer.customColors;
-          }
-          await updateDoc(ref, update);
-          setSaveStatus("saved");
-        } catch {
-          setSaveStatus("error");
-        }
-      })();
+      pendingWriteRef.current = null;
+      void writeCustomization(user.uid, update, setSaveStatus);
     }, DEBOUNCE_MS);
 
     return () => {
@@ -153,6 +175,21 @@ export default function CvPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customizer]);
+
+  // Unmount-only flush: this effect's cleanup runs exactly once, when the
+  // page unmounts (empty dependency array), so — unlike the debounce effect
+  // above — it's safe to treat its cleanup as "the candidate is truly
+  // leaving" and fire the latest pending write rather than dropping it.
+  React.useEffect(() => {
+    return () => {
+      if (pendingWriteRef.current) {
+        const { uid, payload } = pendingWriteRef.current;
+        pendingWriteRef.current = null;
+        void writeCustomization(uid, payload, setSaveStatus);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Reflect customizer changes into the local profile object immediately so
   // the live preview updates without waiting for the Firestore round-trip.
@@ -223,9 +260,12 @@ export default function CvPage() {
       anchor.click();
       document.body.removeChild(anchor);
       URL.revokeObjectURL(url);
-    } catch (err) {
-      const message = err instanceof AuthedFetchError ? tr("downloadErrorBody") : tr("downloadErrorBody");
-      toast({ variant: "destructive", title: tr("downloadErrorTitle"), description: message });
+    } catch {
+      toast({
+        variant: "destructive",
+        title: tr("downloadErrorTitle"),
+        description: tr("downloadErrorBody"),
+      });
     } finally {
       setIsDownloading(false);
     }

@@ -63,7 +63,7 @@ function getAdminApp(): App {
   if (!raw) {
     throw new Error(
       "FIREBASE_SERVICE_ACCOUNT_JSON is not set. Server-side Firebase Admin calls require it — " +
-        "add it to .env.local for local dev (see .env.local.example) or to your deployment " +
+        "add it to .env.local for local dev (see docs/environment.md) or to your deployment " +
         "environment's secrets. It must be the service account key JSON minified to one line."
     );
   }

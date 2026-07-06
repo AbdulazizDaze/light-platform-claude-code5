@@ -45,6 +45,15 @@ export const CV_THEMES: Record<Exclude<CvColorTheme, "custom">, CvThemeColors> =
 
 export const DEFAULT_CV_THEME_ID: Exclude<CvColorTheme, "custom"> = "oxford";
 
+/**
+ * Platinum border/disabled token (CLAUDE.md §4). Exported here — themes.ts is
+ * the documented hex-exception file (see file header) — for the one UI
+ * fallback that needs a literal swatch color rather than a semantic
+ * `border-*` Tailwind class: `CustomSwatchButton` in cv-customizer.tsx uses
+ * it as the gradient fallback when a custom hex input is invalid/empty.
+ */
+export const PLATINUM_BORDER = "#E3E3E3";
+
 export const CV_THEME_IDS = Object.keys(CV_THEMES) as Array<
   Exclude<CvColorTheme, "custom">
 >;

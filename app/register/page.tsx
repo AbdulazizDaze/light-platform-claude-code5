@@ -11,7 +11,7 @@ import { registerStrings as s } from "@/lib/i18n/strings/register";
 import { SAUDI_CITIES, type City } from "@/lib/schemas/common";
 import type { CandidateRegistration } from "@/lib/schemas/user";
 import { useAuth } from "@/lib/firebase/auth-context";
-import { authedFetch, AuthedFetchError } from "@/lib/api/authed-fetch";
+import { authedFetch } from "@/lib/api/authed-fetch";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -159,10 +159,8 @@ export default function RegisterPage() {
       }
 
       router.push("/chat");
-    } catch (error) {
-      setSubmitError(
-        error instanceof AuthedFetchError ? t(s.submitErrorGeneric, "ar") : t(s.submitErrorGeneric, "ar")
-      );
+    } catch {
+      setSubmitError(t(s.submitErrorGeneric, "ar"));
     } finally {
       setSubmitting(false);
     }

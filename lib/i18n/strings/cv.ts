@@ -1,4 +1,11 @@
 import type { LocalizedString } from "../index";
+import { CV_THEMES } from "@/lib/cv/themes";
+
+/** Example hex shown in the custom-color validation hint — sourced from the
+ * oxford theme constant (CLAUDE.md §4 "reference semantic tokens, never raw
+ * hex"; lib/cv/themes.ts is the documented hex-exception file this derives
+ * from) rather than a second hardcoded literal. */
+const CUSTOM_COLOR_EXAMPLE_HEX = CV_THEMES.oxford.primary;
 
 /**
  * Strings for the full CV customization page (`/cv`, docs/design-system.md
@@ -81,8 +88,8 @@ export const cvStrings = {
   customPrimaryLabel: { en: "Primary color", ar: "اللون الأساسي" } satisfies LocalizedString,
   customAccentLabel: { en: "Accent color", ar: "لون التمييز" } satisfies LocalizedString,
   customColorInvalid: {
-    en: "Enter a valid hex color, e.g. #14213D",
-    ar: "أدخل لون هيكس صحيح، مثل ‎#14213D",
+    en: `Enter a valid hex color, e.g. ${CUSTOM_COLOR_EXAMPLE_HEX}`,
+    ar: `أدخل لون هيكس صحيح، مثل ‎${CUSTOM_COLOR_EXAMPLE_HEX}`,
   } satisfies LocalizedString,
 
   // Download

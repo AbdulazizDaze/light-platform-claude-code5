@@ -154,16 +154,23 @@ export default function ChatPage() {
   );
 
   const applyResponse = React.useCallback((data: ChatApiResponse) => {
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: data.reply,
-        timestamp: new Date(),
-        quickReplies: data.quick_replies,
-      },
-    ]);
+    // A completed-session reply from POST /api/chat is "" with no quick
+    // replies (see app/api/chat/route.ts's early-return for
+    // session.status === "completed") — nothing to show, so skip appending
+    // an empty assistant bubble.
+    const hasVisibleContent = data.reply !== "" || data.quick_replies.length > 0;
+    if (hasVisibleContent) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: data.reply,
+          timestamp: new Date(),
+          quickReplies: data.quick_replies,
+        },
+      ]);
+    }
     setSessionStatus(data.session_status);
     if (data.cv_generated && data.cv_data) {
       setCv(data.cv_data);

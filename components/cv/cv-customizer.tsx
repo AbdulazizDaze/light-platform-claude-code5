@@ -10,6 +10,7 @@ import {
   CV_THEME_IDS,
   CV_THEMES,
   isValidHex,
+  PLATINUM_BORDER,
   type CvColorTheme,
   type CvTemplate,
 } from "@/lib/cv/themes";
@@ -162,7 +163,7 @@ export function CvCustomizer({
                   id="cv-custom-primary"
                   value={value.customColors.primary}
                   onChange={(e) => handleCustomColorChange("primary", e.target.value)}
-                  placeholder="#14213D"
+                  placeholder={CV_THEMES.oxford.primary}
                   invalid={!!customErrors.primary}
                   className="font-tabular"
                   dir="ltr"
@@ -185,7 +186,7 @@ export function CvCustomizer({
                   id="cv-custom-accent"
                   value={value.customColors.accent}
                   onChange={(e) => handleCustomColorChange("accent", e.target.value)}
-                  placeholder="#22AE89"
+                  placeholder={CV_THEMES.oxford.accent}
                   invalid={!!customErrors.accent}
                   className="font-tabular"
                   dir="ltr"
@@ -395,8 +396,8 @@ function CustomSwatchButton({
   accent: string;
   onSelect: () => void;
 }) {
-  const validPrimary = isValidHex(primary) ? primary : "#E3E3E3";
-  const validAccent = isValidHex(accent) ? accent : "#E3E3E3";
+  const validPrimary = isValidHex(primary) ? primary : PLATINUM_BORDER;
+  const validAccent = isValidHex(accent) ? accent : PLATINUM_BORDER;
 
   return (
     <button

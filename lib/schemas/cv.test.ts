@@ -146,12 +146,11 @@ describe("CvSchema", () => {
       expect(parseCvData(cv).success).toBe(true);
     });
 
-    it("CURRENT BEHAVIOR: an empty education array is accepted (no .min(1) on EducationSchema array) " +
-      "— flagged as a possible schema gap, not asserted as desired; see QA coverage notes", () => {
+    it("rejects an empty education array (schema requires at least 1, matching the CV generation threshold)", () => {
       const cv = validCv();
       cv.education = [];
       const result = parseCvData(cv);
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
     });
 
     it("rejects an empty languages array (schema requires at least 1)", () => {

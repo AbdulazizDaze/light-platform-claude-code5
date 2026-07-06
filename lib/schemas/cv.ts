@@ -100,7 +100,10 @@ export type CvCertification = z.infer<typeof CertificationSchema>;
 export const CvSchema = z
   .object({
     professional_summary: LocalizedStringSchema,
-    education: z.array(EducationSchema),
+    // PRD §6.1 generation threshold: the base prompt already requires
+    // education completeness before a CV is produced — validation must match
+    // (docs/data-models.md "CV JSON contract").
+    education: z.array(EducationSchema).min(1),
     experience: z.array(ExperienceSchema).default([]),
     projects: z.array(ProjectSchema).default([]),
     // PRD §6.1 / cv-schema skill generation threshold: 6+ skills before a CV is produced.
