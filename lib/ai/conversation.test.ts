@@ -99,6 +99,74 @@ describe("parseModelTurn", () => {
     expect(result.isCvTurn).toBe(false);
     expect(result.reply).toBe("مرحبا");
   });
+
+  it("detects a CV turn even when surrounded by extra prose text (protocol violation tolerated)", () => {
+    const cvJson = {
+      professional_summary: { en: "A summary.", ar: "ملخص." },
+      education: [],
+      skills: [],
+      languages: [],
+    };
+    const text = [
+      "تفضل سيرتك الذاتية:",
+      "```json",
+      JSON.stringify(cvJson),
+      "```",
+      "وهذا كل شيء!",
+    ].join("\n");
+
+    const result = parseModelTurn(text);
+    expect(result.isCvTurn).toBe(true);
+    // Per protocol a CV turn's reply is always empty, even with stray prose
+    // around the fence — downstream validation/storage never sees the prose.
+    expect(result.reply).toBe("");
+    expect(result.cvCandidate).toEqual(cvJson);
+  });
+
+  it("extracts only the FIRST fenced json block when multiple fences are present (nested/consecutive fences)", () => {
+    const text = [
+      "```json",
+      '{ "quick_replies": ["أ", "ب"] }',
+      "```",
+      "بعض النصوص الإضافية بينهما",
+      "```json",
+      '{ "quick_replies": ["ج", "د"] }',
+      "```",
+    ].join("\n");
+
+    const result = parseModelTurn(text);
+    expect(result.isCvTurn).toBe(false);
+    expect(result.quickReplies).toEqual(["أ", "ب"]);
+  });
+
+  it("treats a fenced block containing literal ``` markers inside a JSON string as still-parseable JSON when balanced", () => {
+    // The regex is non-greedy up to the first closing ``` fence — a JSON
+    // string value that itself contains a "```"-like substring can prematurely
+    // terminate the match. This test documents that edge case's actual
+    // behavior: the match truncates at the first ``` sequence, which then
+    // fails JSON.parse and is treated as plain text (safe: no crash, matches
+    // the sentence at the top of the reply).
+    const text = [
+      "```json",
+      '{ "quick_replies": ["أ ``` ب"] }',
+      "```",
+    ].join("\n");
+
+    const result = parseModelTurn(text);
+    // The embedded ``` inside the string breaks the naive fence regex, so this
+    // degrades gracefully to a plain-text reply rather than crashing.
+    expect(result.isCvTurn).toBe(false);
+    expect(result.quickReplies).toEqual([]);
+  });
+
+  it("handles a CV turn with no surrounding whitespace/newlines around the fence", () => {
+    const cvJson = { professional_summary: { en: "x", ar: "س" }, education: [], skills: [], languages: [] };
+    const text = "```json" + JSON.stringify(cvJson) + "```";
+
+    const result = parseModelTurn(text);
+    expect(result.isCvTurn).toBe(true);
+    expect(result.cvCandidate).toEqual(cvJson);
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -75,6 +75,98 @@ describe("CvSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts exactly 6 skills (the boundary minimum)", () => {
+    const cv = validCv();
+    expect(cv.skills).toHaveLength(6);
+    const result = parseCvData(cv);
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts more than 6 skills", () => {
+    const cv = validCv();
+    cv.skills.push({ name: "Extra Skill", level: 2, category: "soft", inferred: true });
+    const result = parseCvData(cv);
+    expect(result.success).toBe(true);
+  });
+
+  describe("skill level bounds", () => {
+    it("accepts level 1 (lower boundary)", () => {
+      const cv = validCv();
+      cv.skills[0]!.level = 1;
+      expect(parseCvData(cv).success).toBe(true);
+    });
+
+    it("accepts level 5 (upper boundary)", () => {
+      const cv = validCv();
+      cv.skills[0]!.level = 5;
+      expect(parseCvData(cv).success).toBe(true);
+    });
+
+    it("rejects level 0 (below lower boundary)", () => {
+      const cv = validCv();
+      cv.skills[0]!.level = 0;
+      expect(parseCvData(cv).success).toBe(false);
+    });
+
+    it("rejects level 6 (above upper boundary)", () => {
+      const cv = validCv();
+      cv.skills[0]!.level = 6;
+      expect(parseCvData(cv).success).toBe(false);
+    });
+
+    it("rejects a non-integer level", () => {
+      const cv = validCv();
+      cv.skills[0]!.level = 3.5;
+      expect(parseCvData(cv).success).toBe(false);
+    });
+  });
+
+  describe("empty-array defaults", () => {
+    it("accepts an empty experience array (defaults to [])", () => {
+      const cv = validCv();
+      cv.experience = [];
+      expect(parseCvData(cv).success).toBe(true);
+    });
+
+    it("accepts an empty projects array (defaults to [])", () => {
+      const cv = validCv();
+      cv.projects = [];
+      expect(parseCvData(cv).success).toBe(true);
+    });
+
+    it("accepts an empty certifications array (defaults to [])", () => {
+      const cv = validCv();
+      cv.certifications = [];
+      expect(parseCvData(cv).success).toBe(true);
+    });
+
+    it("accepts an empty volunteer_work array (defaults to [])", () => {
+      const cv = validCv();
+      cv.volunteer_work = [];
+      expect(parseCvData(cv).success).toBe(true);
+    });
+
+    it("CURRENT BEHAVIOR: an empty education array is accepted (no .min(1) on EducationSchema array) " +
+      "— flagged as a possible schema gap, not asserted as desired; see QA coverage notes", () => {
+      const cv = validCv();
+      cv.education = [];
+      const result = parseCvData(cv);
+      expect(result.success).toBe(true);
+    });
+
+    it("rejects an empty languages array (schema requires at least 1)", () => {
+      const cv = validCv();
+      cv.languages = [];
+      expect(parseCvData(cv).success).toBe(false);
+    });
+
+    it("rejects an empty skills array (schema requires at least 6)", () => {
+      const cv = validCv();
+      cv.skills = [];
+      expect(parseCvData(cv).success).toBe(false);
+    });
+  });
+
   it("rejects missing professional_summary.ar", () => {
     const cv = validCv() as Record<string, unknown>;
     cv.professional_summary = { en: "Only English here." };
