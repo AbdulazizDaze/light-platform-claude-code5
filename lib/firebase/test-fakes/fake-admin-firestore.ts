@@ -115,6 +115,15 @@ class FakeTransaction {
   constructor(private readonly store: Map<string, unknown>) {}
 
   async get(ref: FakeDocRef) {
+    // Mirror the real Admin SDK's hard constraint: all reads must happen
+    // before any write. The production SDK throws exactly this error
+    // (@google-cloud/firestore transaction.js READ_AFTER_WRITE_ERROR_MSG);
+    // enforcing it here keeps unit tests honest about read/write ordering.
+    if (this.ops.length > 0) {
+      throw new Error(
+        "Firestore transactions require all reads to be executed before all writes.",
+      );
+    }
     return ref.get();
   }
 

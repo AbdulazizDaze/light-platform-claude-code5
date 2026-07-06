@@ -169,12 +169,16 @@ export async function persistTurn(
     .withConverter(candidateProfilesAdminConverter);
 
   const messages = await db.runTransaction(async (tx) => {
-    // Re-read the session inside the transaction so a concurrent turn's
-    // append (if any) is composed onto, not overwritten. Fall back to the
-    // caller-supplied `priorMessages` if the doc vanished between the
+    // Firestore transactions require ALL reads before ANY write — read the
+    // session and (when merging a CV) the profile up front, then write.
+    // Re-reading the session inside the transaction means a concurrent
+    // turn's append (if any) is composed onto, not overwritten. Fall back to
+    // the caller-supplied `priorMessages` if the doc vanished between the
     // caller's own read and this transaction (shouldn't happen in practice,
     // but keeps this function total).
     const sessionSnap = await tx.get(sessionRef);
+    const profileSnap = cvGenerated && cvData ? await tx.get(profileRef) : null;
+
     const currentMessages = sessionSnap.exists ? sessionSnap.data()!.messages : priorMessages;
 
     const nextMessages: ChatMessage[] = [...currentMessages];
@@ -198,8 +202,7 @@ export async function persistTurn(
     );
 
     if (cvGenerated && cvData) {
-      const profileSnap = await tx.get(profileRef);
-      const existingProfile = profileSnap.data();
+      const existingProfile = profileSnap?.data();
 
       const completeness = computeProfileCompleteness({
         professional_summary: cvData.professional_summary,
