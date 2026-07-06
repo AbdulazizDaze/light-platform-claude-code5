@@ -35,6 +35,13 @@ export function toApiErrorResponse(error: unknown) {
   if (error instanceof RouteError) {
     return apiError(error.code, error.bilingualMessage);
   }
+  // Unexpected (non-RouteError) failures are server problems — log the real
+  // cause for the operator (error messages here are config/infra text, not
+  // user PII) while returning only a generic bilingual message to the client.
+  console.error(
+    "[api] unhandled route error:",
+    error instanceof Error ? `${error.name}: ${error.message}` : error,
+  );
   return apiError("internal", {
     en: "Something went wrong. Please try again.",
     ar: "حدث خطأ ما. الرجاء المحاولة مرة أخرى.",
@@ -59,8 +66,14 @@ export async function requireAuth(request: NextRequest): Promise<{ uid: string }
     throw new RouteError("unauthorized", UNAUTHORIZED_MESSAGE);
   }
 
+  // Deliberately OUTSIDE the try below: a missing/malformed
+  // FIREBASE_SERVICE_ACCOUNT_JSON is a server-configuration problem and must
+  // surface as a logged `internal` error (via toApiErrorResponse), not
+  // masquerade as a 401 that sends users chasing a sign-in bug.
+  const auth = adminAuth();
+
   try {
-    const decoded = await adminAuth().verifyIdToken(token);
+    const decoded = await auth.verifyIdToken(token);
     return { uid: decoded.uid };
   } catch {
     // Never leak the underlying Firebase Admin error (CLAUDE.md §7).
