@@ -178,19 +178,23 @@ export function CvCard({ cv, locale: initialLocale = "ar" }: CvCardProps) {
   );
 }
 
+/**
+ * Skill chip (docs/design-system.md §9): stated skills render solid
+ * navy-tint; inferred (AI-derived) skills render amber outline + navy text
+ * with a small "AI" micro-badge — amber never carries the chip's own body
+ * text (contrast rule, design-system.md §2).
+ */
 function SkillChip({ skill, aiLabel }: { skill: CvSkill; aiLabel: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium",
-        skill.inferred
-          ? "border border-accent text-accent"
-          : "bg-accent/10 text-accent"
+        "inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium text-primary",
+        skill.inferred ? "border border-accent" : "bg-primary/10"
       )}
     >
       {skill.name}
       {skill.inferred && (
-        <Badge variant="success" size="xs" className="px-1.5 py-0 text-[10px] leading-4">
+        <Badge variant="warning" size="xs" className="px-1.5 py-0 text-[10px] leading-4">
           {aiLabel}
         </Badge>
       )}

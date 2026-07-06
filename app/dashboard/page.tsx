@@ -225,7 +225,7 @@ function CompletenessCard({
 
   const circumference = 2 * Math.PI * 40;
   const offset = circumference - (score / 100) * circumference;
-  const ringColor = score >= 80 ? "text-accent" : score >= 50 ? "text-warning" : "text-danger";
+  const ringColor = score >= 80 ? "text-success" : score >= 50 ? "text-accent" : "text-danger";
 
   return (
     <Card>

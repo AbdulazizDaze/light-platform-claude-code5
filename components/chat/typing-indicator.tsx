@@ -2,7 +2,7 @@ import { t, type Locale } from "@/lib/i18n";
 import { chatStrings } from "@/lib/i18n/strings/chat";
 
 /**
- * Typing indicator — three jungle dots (docs/design-system.md §6). Purely
+ * Typing indicator — three amber dots (docs/design-system.md §6). Purely
  * decorative + an sr-only label for screen readers; honors
  * prefers-reduced-motion via the shared bounce keyframes (opacity-only pulse
  * would also be acceptable, but the bounce here is subtle/short enough that

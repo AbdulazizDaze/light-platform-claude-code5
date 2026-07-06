@@ -5,17 +5,19 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 /**
- * Button primitive (docs/design-system.md §6).
- * Variants: primary (jungle fill), secondary (oxford outline), ghost (text
- * only), danger (fire). Sizes: sm 32h / md 40h / lg 48h. Icon+label uses a
- * logical gap so icons sit on the start side automatically in RTL.
+ * Button primitive (docs/design-system.md §6, brand-core v3).
+ * Variants: primary (amber fill, NAVY text — the one main action per screen),
+ * secondary (navy outline + navy text), ghost (text only), danger (fire).
+ * Sizes: sm 32h / md 40h / lg 48h. Icon+label uses a logical gap so icons sit
+ * on the start side automatically in RTL.
  */
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:bg-border disabled:text-muted disabled:opacity-100",
   {
     variants: {
       variant: {
-        primary: "bg-accent text-primary-foreground hover:bg-accent/90 active:bg-accent/80",
+        primary:
+          "bg-accent text-primary font-semibold hover:bg-accent-deep active:bg-accent-deep",
         secondary:
           "border border-primary bg-transparent text-primary hover:bg-primary/5 active:bg-primary/10",
         ghost: "bg-transparent text-primary hover:bg-primary/5 active:bg-primary/10",

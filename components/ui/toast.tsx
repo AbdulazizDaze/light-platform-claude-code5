@@ -8,10 +8,11 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Toast primitive (docs/design-system.md §6). Top on mobile, corner (top of
- * viewport, end-aligned) on desktop; auto-dismiss; semantic color as a
- * **start-border** (the accent side flips correctly with `border-s-4`, a
- * logical property — never `border-l-4`).
+ * Toast primitive (docs/design-system.md §6, brand-core v3). Top on mobile,
+ * corner (top of viewport, end-aligned) on desktop; auto-dismiss; semantic
+ * color as a **start-border** (the accent side flips correctly with
+ * `border-s-4`, a logical property — never `border-l-4`). Success uses the
+ * semantic success (green) token, not the amber accent.
  */
 const ToastProvider = ToastPrimitives.Provider;
 
@@ -37,7 +38,7 @@ const toastVariants = cva(
     variants: {
       variant: {
         default: "border-s-primary",
-        success: "border-s-accent",
+        success: "border-s-success",
         warning: "border-s-warning",
         destructive: "border-s-danger",
       },

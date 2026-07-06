@@ -3,19 +3,22 @@
 @tailwind utilities;
 
 /*
- * Brand tokens (CLAUDE.md §4 / docs/design-system.md §2).
+ * Brand tokens (CLAUDE.md §4 / docs/design-system.md §2, brand-core v3).
  * Raw hex lives ONLY here — components must reference the semantic
  * Tailwind classes (bg-primary, text-accent, border-border, etc.).
  */
 :root {
-  --color-primary: #14213d; /* Oxford Blue — primary text/dark surfaces */
-  --color-accent: #22ae89; /* Jungle Green — primary action / AI identity / success */
-  --color-warning: #fca311; /* Brand Orange — secondary accent / warnings */
+  --color-primary: #14213d; /* Navy — foundation: primary text, dark surfaces, wordmark */
+  --color-primary-deep: #0d1730; /* Navy deep — dark-section gradients, footer, hero backdrop */
+  --color-accent: #fca311; /* Amber — the action color: primary buttons (navy text), AI identity, arrow motif, focus rings */
+  --color-accent-deep: #e08900; /* Amber deep — hover/active on amber */
+  --color-success: #1f9d66; /* Success states ONLY — semantic, never brand */
+  --color-warning: #fca311; /* Warning = amber (same hex as accent, distinct semantic token) */
   --color-danger: #d62828; /* Fire Red — errors / destructive */
-  --color-border: #e3e3e3; /* Platinum — borders/dividers/disabled */
+  --color-border: #e5e7ec; /* Hairlines — borders/dividers/disabled */
   --color-bg: #ffffff;
   --color-surface: #f7f8fa;
-  --color-muted: #6b7280;
+  --color-muted: #5b6474;
 
   /*
    * shadcn/ui theme mapping (docs/design-system.md §5).
@@ -25,7 +28,7 @@
    * raw color here for a shadcn slot.
    */
   --background: 0 0% 100%; /* --color-bg */
-  --foreground: 221 51% 16%; /* --color-primary (oxford) */
+  --foreground: 221 51% 16%; /* --color-primary (navy) */
 
   --card: 220 23% 97%; /* --color-surface */
   --card-foreground: 221 51% 16%; /* --color-primary */
@@ -33,24 +36,24 @@
   --popover: 0 0% 100%; /* --color-bg */
   --popover-foreground: 221 51% 16%; /* --color-primary */
 
-  --primary: 164 67% 41%; /* --color-accent (jungle) — shadcn "primary" = Light's main action color */
-  --primary-foreground: 0 0% 100%; /* white text on jungle */
+  --primary: 37 98% 53%; /* --color-accent (amber) — shadcn "primary" = Light's main action color */
+  --primary-foreground: 221 51% 16%; /* --color-primary (navy) text on amber — amber never carries body text, but as a button fill it takes navy text per design-system.md §2 */
 
-  --secondary: 0 0% 100%; /* oxford outline button = white fill */
-  --secondary-foreground: 221 51% 16%; /* --color-primary */
+  --secondary: 221 51% 16%; /* --color-primary (navy) — secondary = navy outline/fill */
+  --secondary-foreground: 0 0% 100%; /* white text on navy */
 
   --muted: 220 23% 97%; /* --color-surface, used for muted backgrounds */
-  --muted-foreground: 220 9% 46%; /* --color-muted */
+  --muted-foreground: 218 12% 41%; /* --color-muted */
 
-  --accent: 164 67% 41%; /* --color-accent (jungle), used for hover/highlight backgrounds */
-  --accent-foreground: 0 0% 100%;
+  --accent: 37 98% 53%; /* --color-accent (amber), used for hover/highlight backgrounds */
+  --accent-foreground: 221 51% 16%; /* navy text on amber highlight */
 
   --destructive: 0 69% 50%; /* --color-danger (fire) */
   --destructive-foreground: 0 0% 100%;
 
-  --border: 0 0% 89%; /* --color-border (platinum) */
-  --input: 0 0% 89%; /* --color-border (platinum) */
-  --ring: 164 67% 41% / 0.4; /* --color-accent at 40% — focus ring per design-system.md §2 */
+  --border: 223 16% 91%; /* --color-border */
+  --input: 223 16% 91%; /* --color-border */
+  --ring: 37 98% 53% / 0.4; /* --color-accent (amber) at 40% — focus ring per design-system.md §2 */
 
   --radius: 0.75rem; /* 12px — md radius, the shadcn default component radius */
 }

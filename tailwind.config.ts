@@ -10,8 +10,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: "var(--color-primary)",
-        accent: "var(--color-accent)",
+        primary: {
+          DEFAULT: "var(--color-primary)",
+          deep: "var(--color-primary-deep)",
+        },
+        accent: {
+          DEFAULT: "var(--color-accent)",
+          deep: "var(--color-accent-deep)",
+        },
+        success: "var(--color-success)",
         warning: "var(--color-warning)",
         danger: "var(--color-danger)",
         border: "var(--color-border)",
@@ -100,11 +107,47 @@ const config: Config = {
           from: { opacity: "0" },
           to: { opacity: "1" },
         },
+        /*
+         * Brand motion (PRD §9.3 / docs/design-system.md §7): new chat
+         * messages and CvCard content fade in while rising 8px — the
+         * signature "arriving" moment. Reduced-motion is handled globally in
+         * this file's `@media (prefers-reduced-motion: reduce)` rule, which
+         * clamps all animation-durations to ~0, so no per-usage override is
+         * needed — just don't gate essential content behind the animation.
+         */
+        "fade-rise": {
+          from: { opacity: "0", transform: "translateY(8px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        /*
+         * Skeleton shimmer (replaces a plain pulse): a light sweep across a
+         * gradient background. Uses `background-position` so it works on any
+         * element with the `bg-gradient-to-r` shimmer utility class already
+         * applied via `animate-shimmer` (see components/ui/skeleton.tsx).
+         */
+        shimmer: {
+          from: { backgroundPosition: "200% 0" },
+          to: { backgroundPosition: "-200% 0" },
+        },
+        /*
+         * Arrow micro-nudge for CTA hover (PRD §9.3): a small up-right
+         * translate on the arrow motif icon within a button/link on `:hover`
+         * via the `group-hover:animate-arrow-nudge` pattern. Logical-safe:
+         * "up-right" is a diagonal, not a start/end direction, so it does not
+         * need RTL mirroring.
+         */
+        "arrow-nudge": {
+          "0%, 100%": { transform: "translate(0, 0)" },
+          "50%": { transform: "translate(2px, -2px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 200ms ease-out",
+        "fade-rise": "fade-rise 250ms ease-out",
+        shimmer: "shimmer 1.6s ease-in-out infinite",
+        "arrow-nudge": "arrow-nudge 350ms ease-out",
       },
     },
   },

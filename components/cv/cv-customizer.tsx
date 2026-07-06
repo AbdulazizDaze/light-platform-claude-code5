@@ -239,7 +239,7 @@ function SaveStatusIndicator({ status, locale }: { status: SaveStatus; locale: L
       aria-live="polite"
     >
       {status === "saving" && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />}
-      {status === "saved" && <Check className="h-3.5 w-3.5 text-accent" aria-hidden />}
+      {status === "saved" && <Check className="h-3.5 w-3.5 text-success" aria-hidden />}
       {status === "saving" && tr("savingLabel")}
       {status === "saved" && tr("savedLabel")}
       {status === "error" && tr("saveErrorBody")}

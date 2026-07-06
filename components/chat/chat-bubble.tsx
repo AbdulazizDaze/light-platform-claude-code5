@@ -37,10 +37,10 @@ export function ChatBubble({ role, content, timestamp, locale = "ar" }: ChatBubb
           className={cn(
             "rounded-lg px-4 py-3 text-start text-body-lg",
             isAssistant
-              ? // AI: surface/white bubble, jungle start-accent border signals intelligence,
+              ? // AI: surface/white bubble, amber start-accent border signals intelligence,
                 // squared start corner (the corner nearest the start edge it's anchored to).
                 "rounded-ss-sm border-s-2 border-s-accent bg-bg text-primary shadow-e1"
-              : // User: oxford-tinted bubble, squared end corner.
+              : // User: navy-tinted bubble, squared end corner.
                 "rounded-ee-sm bg-primary/10 text-primary"
           )}
         >

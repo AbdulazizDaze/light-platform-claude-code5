@@ -49,6 +49,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
+import { Logo } from "@/components/brand/logo";
+import { LogoMark } from "@/components/brand/logo-mark";
 
 /**
  * /showcase — internal dev reference for the Light design system
@@ -95,6 +97,7 @@ export default function ShowcasePage() {
       </header>
 
       <div className="flex flex-col gap-16">
+        <LogoSection title="Logo / وسم لايت" />
         <ColorSection title={tr(s.sectionColors)} />
         <TypeSection title={tr(s.sectionType)} locale={locale} />
         <SpacingSection title={tr(s.sectionSpacing)} />
@@ -122,16 +125,43 @@ function SectionShell({ title, children }: { title: string; children: React.Reac
   );
 }
 
+function LogoSection({ title }: { title: string }) {
+  return (
+    <SectionShell title={title}>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-wrap items-center gap-8 rounded-lg border border-border bg-bg p-6">
+          <LogoMark size={48} />
+          <Logo lang="ar" size="lg" />
+          <Logo lang="en" size="lg" />
+          <Logo lang="mark-only" size="lg" />
+        </div>
+        <div className="flex flex-wrap items-center gap-8 rounded-lg bg-primary p-6">
+          <LogoMark size={48} bracketColor="currentColor" className="text-white" />
+          <Logo lang="ar" size="lg" onDark />
+          <Logo lang="en" size="lg" onDark />
+        </div>
+        <div className="flex flex-wrap items-center gap-6 rounded-lg border border-border bg-bg p-6">
+          <Logo lang="en" size="sm" />
+          <Logo lang="en" size="md" />
+          <Logo lang="en" size="lg" />
+        </div>
+      </div>
+    </SectionShell>
+  );
+}
+
 function ColorSection({ title }: { title: string }) {
   const swatches: Array<{ name: string; className: string; textClassName?: string }> = [
-    { name: "primary (Oxford Blue)", className: "bg-primary", textClassName: "text-white" },
-    { name: "accent (Jungle Green)", className: "bg-accent", textClassName: "text-white" },
-    { name: "warning (Brand Orange)", className: "bg-warning", textClassName: "text-primary" },
-    { name: "danger (Fire Red)", className: "bg-danger", textClassName: "text-white" },
-    { name: "border (Platinum)", className: "bg-border", textClassName: "text-primary" },
-    { name: "surface", className: "bg-surface border border-border", textClassName: "text-primary" },
-    { name: "bg", className: "bg-bg border border-border", textClassName: "text-primary" },
-    { name: "muted", className: "bg-muted", textClassName: "text-white" },
+    { name: "primary — Navy #14213D", className: "bg-primary", textClassName: "text-white" },
+    { name: "primary-deep — Navy deep #0D1730", className: "bg-primary-deep", textClassName: "text-white" },
+    { name: "accent — Amber #FCA311", className: "bg-accent", textClassName: "text-primary" },
+    { name: "accent-deep — Amber deep #E08900", className: "bg-accent-deep", textClassName: "text-primary" },
+    { name: "success — #1F9D66", className: "bg-success", textClassName: "text-white" },
+    { name: "danger — Fire Red #D62828", className: "bg-danger", textClassName: "text-white" },
+    { name: "border — #E5E7EC", className: "bg-border", textClassName: "text-primary" },
+    { name: "surface — #F7F8FA", className: "bg-surface border border-border", textClassName: "text-primary" },
+    { name: "bg — #FFFFFF", className: "bg-bg border border-border", textClassName: "text-primary" },
+    { name: "muted — #5B6474", className: "bg-muted", textClassName: "text-white" },
   ];
 
   return (
