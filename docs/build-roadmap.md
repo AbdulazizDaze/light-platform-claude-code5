@@ -20,47 +20,47 @@ Everything a candidate touches, working end to end and runnable with `npm run de
 matching yet — that's M2. A candidate can register, converse, and get a downloadable bilingual CV.)
 
 ### 1.1 Foundation
-- [ ] Scaffold Next.js 14 App Router + TypeScript strict + Tailwind (RTL root) + ESLint + Vitest.
-- [ ] `package.json` scripts: dev/build/start/lint/typecheck/test (`CLAUDE.md §8`).
-- [ ] Firebase wiring: client SDK config, Admin SDK init, region `me-central1`, `.env.local` template.
-- [ ] `lib/i18n` scaffolding + direction/logical-property helpers.
-- [ ] Brand Tailwind theme (semantic tokens + Alexandria/Readex Pro fonts); base `<html dir="rtl" lang="ar">`.
-- [ ] Initialize **shadcn/ui**; map its CSS variables to Light tokens in `app/globals.css`; add the
+- [x] Scaffold Next.js 14 App Router + TypeScript strict + Tailwind (RTL root) + ESLint + Vitest.
+- [x] `package.json` scripts: dev/build/start/lint/typecheck/test (`CLAUDE.md §8`).
+- [x] Firebase wiring: client SDK config, Admin SDK init, region `me-central1`, `.env.local` template.
+- [x] `lib/i18n` scaffolding + direction/logical-property helpers.
+- [x] Brand Tailwind theme (semantic tokens + Alexandria/Readex Pro fonts); base `<html dir="rtl" lang="ar">`.
+- [x] Initialize **shadcn/ui**; map its CSS variables to Light tokens in `app/globals.css`; add the
       base primitives (button, input, card, dialog, dropdown-menu, badge, toast, skeleton, tabs) and
       audit each for RTL. Build strictly against `docs/design-system.md`.
 - **Gate:** a token/primitive showcase renders correctly in RTL; `rtl-arabic-specialist` +
       `design:design-critique` sign-off on the base look.
 
 ### 1.2 Candidate data layer & security
-- [ ] Zod schemas for `users`, `candidate_profiles`, `chat_sessions` (`cv-schema` skill for CV).
-- [ ] Typed Firestore converters in `lib/firebase/`.
-- [ ] `firestore.rules` (owner-only for the candidate collections) + needed indexes.
+- [x] Zod schemas for `users`, `candidate_profiles`, `chat_sessions` (`cv-schema` skill for CV).
+- [x] Typed Firestore converters in `lib/firebase/`.
+- [x] `firestore.rules` (owner-only for the candidate collections) + needed indexes.
 - **Gate:** rules + schemas unit-tested; `security-reviewer` sign-off.
 
 ### 1.3 Auth & candidate registration
-- [ ] Firebase Anonymous Auth + `AuthContext` + `authedFetch()`.
-- [ ] Landing page (dual CTAs, product mockup, value prop copy — bilingual).
-- [ ] Candidate registration (name, phone, city; nationality captured/inferred) → `users` + profile.
-- [ ] Server-side identity integrity in a shared route helper.
+- [x] Firebase Anonymous Auth + `AuthContext` + `authedFetch()`.
+- [x] Landing page (dual CTAs, product mockup, value prop copy — bilingual).
+- [x] Candidate registration (name, phone, city; nationality captured/inferred) → `users` + profile.
+- [x] Server-side identity integrity in a shared route helper.
 - **Gate:** identity cannot be spoofed via body; `security-reviewer` sign-off.
 
 ### 1.4 AI conversation & CV generation (core IP)
-- [ ] `lib/ai/callGemini()` with fallback chain + retry.
-- [ ] Base prompt + user-context builder (`gemini-prompt` skill), Saudi dialect, gender-aware.
-- [ ] `POST /api/chat`: conversation, implicit skill inference, pacing, Zod-validated CV JSON.
-- [ ] Chat UI (AI bubbles right, user left) + inline CvCard preview + AR/EN toggle.
-- [ ] CV-upload path (PDF) → analyze → improve.
+- [x] `lib/ai/callGemini()` with fallback chain + retry.
+- [x] Base prompt + user-context builder (`gemini-prompt` skill), Saudi dialect, gender-aware.
+- [x] `POST /api/chat`: conversation, implicit skill inference, pacing, Zod-validated CV JSON.
+- [x] Chat UI (AI bubbles right, user left) + inline CvCard preview + AR/EN toggle.
+- [x] CV-upload path (PDF) → analyze → improve.
 - **Gate:** invalid AI JSON never stored; dialect + gender reviewed by `rtl-arabic-specialist`.
 
 ### 1.5 CV rendering & PDF
-- [ ] CV customization page: 4 templates, 6 themes + custom colors, AR/EN.
-- [ ] Cloud Run Puppeteer service (`services/pdf/`) with Arabic typography (Noto Sans Arabic).
-- [ ] `POST /api/pdf` thin proxy streaming Cloud Run output; rate limit 5/min/uid.
+- [x] CV customization page: 4 templates, 6 themes + custom colors, AR/EN.
+- [x] Cloud Run Puppeteer service (`services/pdf/`) with Arabic typography (Noto Sans Arabic).
+- [x] `POST /api/pdf` thin proxy streaming Cloud Run output; rate limit 5/min/uid.
 - **Gate:** Arabic renders correctly in the actual PDF.
 
 ### 1.6 Candidate dashboard
-- [ ] Dashboard with status cards + quick actions (edit CV, download, view profile).
-- [ ] Session persistence: returning user sees their CV.
+- [x] Dashboard with status cards + quick actions (edit CV, download, view profile).
+- [x] Session persistence: returning user sees their CV.
 
 ### ✅ Milestone 1 local-test handoff (you, in the browser)
 Run `npm run dev` and check `http://localhost:3000`:
@@ -148,7 +148,24 @@ each milestone stays runnable via `npm run dev`.
 **Session 0 (framework bootstrap):** Repo set up as the Claude Code operating system for Light —
 `CLAUDE.md`, `docs/` (incl. `workflow.md`), agents, skills, commands, hooks, settings. Git posture:
 **commit + push directly to `main`**; deploys/force-push/reset denied. Scope condensed to **two
-milestones**: M1 Candidate, then M2 Recruiter + Matching. **No product code yet.**
-Next: finish one-time setup (`docs/workflow.md §1`), then `/plan-feature M1`.
+milestones**: M1 Candidate, then M2 Recruiter + Matching.
 
-**Version tags:** _(none yet — first will be `v1.0-candidate` after M1)_
+**Session 1 (M1 built, 2026-07-06):** Milestone 1 — Full Candidate Experience — is **code-complete
+on `main`** (~26 conventional commits): Next.js 14 scaffold (TS strict, Tailwind on Light tokens,
+RTL root), shadcn/ui primitives (RTL-audited, global DirectionProvider), lib/i18n, Firebase
+client/Admin wiring (env template in `docs/environment.md` — hooks block `.env*` writes), Zod
+schemas with identity-rejecting `CvSchema`, owner-only `firestore.rules` (client profile writes
+allowlisted to cv_template/cv_color_theme/cv_custom_colors/last_active), lazy anonymous auth +
+bilingual landing, consent-capturing registration, Gemini layer (fallback chain, Saudi-dialect
+gender-aware base prompt, pacing), `/api/chat` (transactional persistence, validated CV merge),
+`/api/cv-upload` (native PDF understanding), `services/pdf` (Puppeteer, Noto Sans Arabic, 4
+templates/6 themes — verified renders) + `/api/pdf` proxy, CV customization page, dashboard with
+completeness scoring. **Gates passed:** QA (242 tests green), code review + security reviews
+(all findings fixed, incl. a read-after-write transaction blocker). **Awaiting: user local browser
+test** (checklist above), then `/tag-release v1.0-candidate`.
+
+**M2 carry-forwards (security):** harden/replace `readTolerant` before any cross-owner read;
+make `candidate_profiles.personal` server-authoritative (or read identity from `users/{uid}`)
+for recruiter-facing surfaces; consider `@firebase/rules-unit-testing` emulator coverage for rules.
+
+**Version tags:** _(none yet — `v1.0-candidate` after the user approves M1)_
