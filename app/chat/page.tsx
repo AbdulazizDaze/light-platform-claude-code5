@@ -80,7 +80,10 @@ export default function ChatPage() {
   const [messages, setMessages] = React.useState<DisplayMessage[]>([]);
   const [input, setInput] = React.useState("");
   const [isSending, setIsSending] = React.useState(false);
-  const [isInitializing, setIsInitializing] = React.useState(true);
+  // False until the greeting request actually starts — the entry-choice card
+  // is a waiting-on-the-user state, not a loading state, so the typing
+  // indicator must not show and the composer must stay usable before a choice.
+  const [isInitializing, setIsInitializing] = React.useState(false);
   const [error, setError] = React.useState<{ en: string; ar: string } | null>(null);
   const [cv, setCv] = React.useState<Cv | null>(null);
   const [cvGenerating, setCvGenerating] = React.useState(false);
