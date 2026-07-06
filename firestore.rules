@@ -11,7 +11,9 @@ rules_version = '2';
 //
 // Access model (PRD §9.8, docs/data-models.md):
 //   - users/{uid}              owner-only read/write, identity fields locked
-//   - candidate_profiles/{uid} owner-only read/write
+//   - candidate_profiles/{uid} owner-only read; server-write-only create/delete;
+//                              client update limited to cv_template/cv_color_theme/
+//                              cv_custom_colors/last_active (see below)
 //   - chat_sessions/{uid}      owner-only read/write
 //
 // Identity integrity (CLAUDE.md §3.4 / §7): the *client* must never be able
@@ -62,12 +64,24 @@ service cloud.firestore {
     }
 
     // --- candidate_profiles/{uid} --------------------------------------
-    // Owner-only. In M1 the API routes (Admin SDK) perform the actual
-    // profile writes (CV generation, preferences), so client write access
-    // here mainly covers owner-initiated edits (e.g. cv_template/theme
-    // changes) and is scoped to the profile's own uid.
+    // Owner-only read. Content/completeness/personal are SERVER-WRITE-ONLY:
+    // the profile document is created by `registerCandidate` (Admin SDK,
+    // bypasses these rules) and its CV content is written by `persistTurn`
+    // (also Admin SDK, chat/cv-upload routes). The client's ONLY legitimate
+    // direct write is the debounced customization update in app/cv/page.tsx
+    // (cv_template / cv_color_theme / cv_custom_colors), plus touching
+    // last_active. So: deny client create/delete entirely, and scope client
+    // update to that allowlist via `diff().affectedKeys().hasOnly([...])` —
+    // any update that touches a field outside the allowlist (personal,
+    // professional_summary, education, experience, skills, profile_completeness,
+    // etc.) is rejected, even if it also includes an allowed field.
     match /candidate_profiles/{uid} {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow create: if false;
+      allow delete: if false;
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['cv_template', 'cv_color_theme', 'cv_custom_colors', 'last_active']);
     }
 
     // --- chat_sessions/{uid} --------------------------------------------

@@ -44,6 +44,11 @@ export const UserSchema = z.object({
   notification_prefs: NotificationPrefsSchema,
   created_at: TimestampSchema,
   updated_at: TimestampSchema,
+  // PDPL consent capture (CLAUDE.md §3.7, PRD §16.1) — server-set once at
+  // first registration (lib/users/register-candidate.ts), never updated
+  // afterward. Optional here because it didn't exist before this field was
+  // introduced; older docs simply won't have it.
+  consent_accepted_at: TimestampSchema.optional(),
 });
 
 export type User = z.infer<typeof UserSchema>;

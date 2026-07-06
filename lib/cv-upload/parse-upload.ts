@@ -27,16 +27,25 @@ function looksLikePdf(bytes: Buffer): boolean {
  * Never throws — every failure mode is a typed `{ ok: false, reason }`.
  */
 export function parseUploadBase64(fileBase64: string): ParseUploadResult {
-  let bytes: Buffer;
-  try {
-    // Strip an optional `data:application/pdf;base64,` prefix defensively.
-    const commaIndex = fileBase64.indexOf(",");
-    const looksLikeDataUrl = fileBase64.slice(0, 5) === "data:";
-    const raw = looksLikeDataUrl && commaIndex !== -1 ? fileBase64.slice(commaIndex + 1) : fileBase64;
-    bytes = Buffer.from(raw, "base64");
-  } catch {
-    return { ok: false, reason: "invalid_base64" };
+  // Cheap pre-decode guard: base64 inflates size by ~4/3, so a string whose
+  // raw length already implies a decoded size well past the cap can be
+  // rejected before ever allocating the decoded Buffer. The 1.4 multiplier
+  // gives headroom over the exact 4/3 ratio for an optional `data:` URL
+  // prefix and base64 padding, while still bailing out early on grossly
+  // oversized payloads instead of decoding the whole thing first.
+  if (fileBase64.length > MAX_DECODED_PDF_BYTES * 1.4) {
+    return { ok: false, reason: "too_large" };
   }
+
+  // Strip an optional `data:application/pdf;base64,` prefix defensively.
+  // `Buffer.from(str, "base64")` never throws on malformed input (Node just
+  // decodes what it can and drops invalid characters), so there is no
+  // reachable catch here — the emptiness check below is what actually
+  // detects "not real base64" input.
+  const commaIndex = fileBase64.indexOf(",");
+  const looksLikeDataUrl = fileBase64.slice(0, 5) === "data:";
+  const raw = looksLikeDataUrl && commaIndex !== -1 ? fileBase64.slice(commaIndex + 1) : fileBase64;
+  const bytes = Buffer.from(raw, "base64");
 
   if (bytes.length === 0) {
     return { ok: false, reason: "invalid_base64" };

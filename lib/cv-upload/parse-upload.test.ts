@@ -34,4 +34,13 @@ describe("parseUploadBase64", () => {
     const result = parseUploadBase64("");
     expect(result.ok).toBe(false);
   });
+
+  it("rejects a grossly oversized base64 string via the cheap pre-decode length guard", () => {
+    // A raw base64 string far longer than any legitimate encoding of
+    // MAX_DECODED_PDF_BYTES should be rejected before ever decoding —
+    // exercise the length-only fast path with obviously-too-long input.
+    const hugeBase64 = "A".repeat(Math.ceil(MAX_DECODED_PDF_BYTES * 1.4) + 100);
+    const result = parseUploadBase64(hugeBase64);
+    expect(result).toEqual({ ok: false, reason: "too_large" });
+  });
 });

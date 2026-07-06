@@ -10,10 +10,15 @@
  * Identity integrity (CLAUDE.md §3.4): `uid` and `role` are set here from
  * the function's own parameters/constants, never read off `input`. On an
  * existing user doc, only non-identity fields are updated — `uid`, `role`,
- * `created_at`, and `consent_accepted_at` are preserved from the initial
- * registration (mirrors firestore.rules' `unchanged(['uid','role','phone'])`
- * guard for direct client writes; this server path is additionally careful
- * not to let a second POST silently move the recorded consent timestamp).
+ * `phone`, `created_at`, and `consent_accepted_at` are preserved from the
+ * initial registration (mirrors firestore.rules' `unchanged(['uid','role',
+ * 'phone'])` guard for direct client writes; this server path is
+ * additionally careful not to let a second POST silently move the recorded
+ * consent timestamp). `phone` is the persistent identifier for a candidate —
+ * a legitimate phone-number change is a dedicated, verified flow (not yet
+ * built), never an implicit side effect of re-submitting the registration
+ * form. Likewise `profile.personal.phone` is never touched by the update
+ * path — only set once at first registration.
  */
 
 import { FieldValue, type Firestore } from "firebase-admin/firestore";
@@ -98,12 +103,11 @@ export async function registerCandidate(
   }
 
   // --- Idempotent re-registration: update non-identity fields only. ---
-  // uid/role/created_at/consent_accepted_at are intentionally never touched.
+  // uid/role/phone/created_at/consent_accepted_at are intentionally never touched.
   batch.set(
     usersRef,
     {
       name: input.name,
-      phone: input.phone,
       gender: input.gender,
       city: input.city,
       nationality: input.nationality,
@@ -119,7 +123,6 @@ export async function registerCandidate(
     {
       personal: {
         name: input.name,
-        phone: input.phone,
         city: input.city,
         nationality: input.nationality,
         gender: input.gender,

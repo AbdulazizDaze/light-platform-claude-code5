@@ -1,14 +1,22 @@
 /**
  * Minimal in-memory fake of the Firebase Admin `Firestore` surface used by
  * `lib/users/register-candidate.ts` and `lib/chat/session.ts` — just enough
- * of `collection().doc().withConverter().get()/.set()` and `db.batch()` to
- * exercise the real create-vs-update / merge branching logic in those
- * modules without touching a live Firestore instance.
+ * of `collection().doc().withConverter().get()/.set()`, `db.batch()`, and
+ * `db.runTransaction()` to exercise the real create-vs-update / merge
+ * branching logic in those modules without touching a live Firestore instance.
  *
  * Not a general-purpose Firestore emulator — only implements the subset of
  * the SDK surface those two callers actually use. `FieldValue.serverTimestamp()`
  * is represented by a sentinel object so tests can assert "a timestamp was
  * set" without depending on wall-clock time.
+ *
+ * `runTransaction()` LIMITATION: this fake runs the callback once,
+ * sequentially, with no real optimistic-concurrency semantics (no retry on
+ * conflicting reads, no isolation between concurrent callers). It exists
+ * only to exercise the read-then-write control flow of `lib/chat/session.ts`
+ * `persistTurn` in unit tests — it does NOT model actual transaction
+ * contention/retry behavior. Do not rely on it for concurrency tests; that
+ * requires the real Firestore emulator.
  */
 
 export const SERVER_TIMESTAMP_SENTINEL = { __serverTimestamp: true } as const;
@@ -96,6 +104,38 @@ function deepMerge(
   return result;
 }
 
+/**
+ * Minimal fake `Transaction`: `get()` reads through to the same store (no
+ * snapshot isolation), `set()`/`update()` queue writes applied immediately
+ * after the callback returns (no rollback-on-conflict — see file header).
+ */
+class FakeTransaction {
+  private readonly ops: Array<() => void> = [];
+
+  constructor(private readonly store: Map<string, unknown>) {}
+
+  async get(ref: FakeDocRef) {
+    return ref.get();
+  }
+
+  set(ref: FakeDocRef, data: unknown, options?: { merge?: boolean }) {
+    const docRef = ref as unknown as { path: string; converter: ConverterLike<unknown> | null };
+    this.ops.push(() => applySet(this.store, docRef.path, data, docRef.converter, options));
+    return this;
+  }
+
+  update(ref: FakeDocRef, data: unknown) {
+    const docRef = ref as unknown as { path: string; converter: ConverterLike<unknown> | null };
+    this.ops.push(() => applySet(this.store, docRef.path, data, docRef.converter, { merge: true }));
+    return this;
+  }
+
+  /** Test-internal: apply queued writes (called after the callback resolves). */
+  _commit() {
+    for (const op of this.ops) op();
+  }
+}
+
 class FakeWriteBatch {
   private readonly ops: Array<() => void> = [];
 
@@ -127,6 +167,18 @@ export class FakeFirestore {
 
   batch(): FakeWriteBatch {
     return new FakeWriteBatch(this.store);
+  }
+
+  /**
+   * Fake `runTransaction`: invokes `updateFunction` once with a
+   * `FakeTransaction`, then applies its queued writes. See the file-header
+   * limitation note — this does NOT retry on conflicting concurrent writes.
+   */
+  async runTransaction<T>(updateFunction: (tx: FakeTransaction) => Promise<T>): Promise<T> {
+    const tx = new FakeTransaction(this.store);
+    const result = await updateFunction(tx);
+    tx._commit();
+    return result;
   }
 
   /** Test helper: seed a document directly (bypasses converters). */

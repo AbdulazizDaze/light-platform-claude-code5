@@ -14,7 +14,7 @@ export const ChatRoleSchema = z.enum(["user", "assistant"]);
 export const ChatMessageSchema = z.object({
   id: z.string().min(1),
   role: ChatRoleSchema,
-  content: z.string().min(1),
+  content: z.string().min(1).max(4000),
   quick_replies: z.array(z.string()).optional(),
   timestamp: TimestampSchema,
 });

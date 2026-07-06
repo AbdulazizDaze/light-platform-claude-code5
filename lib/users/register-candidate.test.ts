@@ -77,23 +77,26 @@ describe("registerCandidate", () => {
     expect(user.email).toBe("a@example.com");
   });
 
-  it("on re-registration, updates name/phone/city but preserves uid, role, created_at, consent_accepted_at", async () => {
+  it("on re-registration, updates name/city but preserves uid, role, phone, created_at, consent_accepted_at", async () => {
     await registerCandidate(db as never, "uid-1", makeInput({ name: "أحمد" }));
     const firstUser = db.raw("users/uid-1") as Record<string, unknown>;
 
     const result = await registerCandidate(
       db as never,
       "uid-1",
-      makeInput({ name: "محمد", city: "Jeddah" }),
+      makeInput({ name: "محمد", city: "Jeddah", phone: "+966511111111" }),
     );
 
     expect(result.created).toBe(false);
     const secondUser = db.raw("users/uid-1") as Record<string, unknown>;
     expect(secondUser.name).toBe("محمد");
     expect(secondUser.city).toBe("Jeddah");
-    // Identity/consent fields untouched by the second call.
+    // Identity/consent fields untouched by the second call, even when the
+    // input carries a different phone — phone changes require a dedicated
+    // verified flow, never an implicit side effect of re-registration.
     expect(secondUser.uid).toBe(firstUser.uid);
     expect(secondUser.role).toBe(firstUser.role);
+    expect(secondUser.phone).toBe(firstUser.phone);
     expect(secondUser.created_at).toEqual(firstUser.created_at);
     expect(secondUser.consent_accepted_at).toEqual(firstUser.consent_accepted_at);
   });
@@ -108,10 +111,13 @@ describe("registerCandidate", () => {
       skills: [{ name: "Sales", level: 3, category: "soft", inferred: true }],
     });
 
-    await registerCandidate(db as never, "uid-1", makeInput({ name: "محمد" }));
+    await registerCandidate(db as never, "uid-1", makeInput({ name: "محمد", phone: "+966522222222" }));
 
     const profileAfter = db.raw("candidate_profiles/uid-1") as Record<string, unknown>;
     expect((profileAfter.personal as Record<string, unknown>).name).toBe("محمد");
+    // phone is never mirrored into profile.personal on update, even when the
+    // input carries a different value.
+    expect((profileAfter.personal as Record<string, unknown>).phone).toBe("+966500000000");
     // CV content untouched by re-registration.
     expect(profileAfter.professional_summary).toEqual({ en: "Existing summary.", ar: "ملخص موجود." });
     expect(profileAfter.skills).toEqual([{ name: "Sales", level: 3, category: "soft", inferred: true }]);

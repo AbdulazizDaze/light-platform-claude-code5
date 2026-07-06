@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FakeFirestore, SERVER_TIMESTAMP_SENTINEL } from "@/lib/firebase/test-fakes/fake-admin-firestore";
 import type { ChatMessage } from "@/lib/schemas/chat";
 import type { Cv } from "@/lib/schemas/cv";
+import { MAX_PERSISTED_MESSAGES } from "./session";
 
 // `session.ts` imports `FieldValue` from `firebase-admin/firestore` at module
 // scope purely for `FieldValue.serverTimestamp()` sentinels — stub it so this
@@ -259,5 +260,58 @@ describe("persistTurn", () => {
     expect(result.messages[0]).toBe(prior[0]);
     expect(result.messages[1]?.content).toBe("second message");
     expect(result.messages[2]?.content).toBe("reply");
+  });
+
+  it(`trims persisted messages to the most recent ${String(MAX_PERSISTED_MESSAGES)} when the turn would exceed the cap`, async () => {
+    const prior: ChatMessage[] = Array.from({ length: MAX_PERSISTED_MESSAGES }, (_, i) => ({
+      id: `p${i}`,
+      role: i % 2 === 0 ? "user" : "assistant",
+      content: `message ${i}`,
+      timestamp: new Date() as unknown as ChatMessage["timestamp"],
+    }));
+
+    const result = await persistTurn(db as never, {
+      uid: "uid-1",
+      priorMessages: prior,
+      userMessageContent: "new user message",
+      assistantReply: "new assistant reply",
+      assistantQuickReplies: [],
+      cvGenerated: false,
+      cvData: null,
+      sessionType: "returning",
+    });
+
+    // 80 prior + 2 new = 82, trimmed down to the most recent 80.
+    expect(result.messages).toHaveLength(MAX_PERSISTED_MESSAGES);
+    expect(result.messages[0]?.content).toBe("message 2");
+    expect(result.messages[result.messages.length - 2]?.content).toBe("new user message");
+    expect(result.messages[result.messages.length - 1]?.content).toBe("new assistant reply");
+
+    const stored = db.raw("chat_sessions/uid-1") as Record<string, unknown>;
+    expect((stored.messages as unknown[]).length).toBe(MAX_PERSISTED_MESSAGES);
+  });
+
+  it("does not trim when the turn's total message count is exactly at the cap", async () => {
+    const prior: ChatMessage[] = Array.from({ length: MAX_PERSISTED_MESSAGES - 1 }, (_, i) => ({
+      id: `p${i}`,
+      role: i % 2 === 0 ? "user" : "assistant",
+      content: `message ${i}`,
+      timestamp: new Date() as unknown as ChatMessage["timestamp"],
+    }));
+
+    const result = await persistTurn(db as never, {
+      uid: "uid-1",
+      priorMessages: prior,
+      userMessageContent: null,
+      assistantReply: "final reply",
+      assistantQuickReplies: [],
+      cvGenerated: false,
+      cvData: null,
+      sessionType: "returning",
+    });
+
+    expect(result.messages).toHaveLength(MAX_PERSISTED_MESSAGES);
+    expect(result.messages[0]?.content).toBe("message 0");
+    expect(result.messages[result.messages.length - 1]?.content).toBe("final reply");
   });
 });

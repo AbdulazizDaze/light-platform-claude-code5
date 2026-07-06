@@ -80,6 +80,21 @@ export async function createCvUploadSession(db: Firestore, uid: string): Promise
   return initial;
 }
 
+/**
+ * Hard cap on messages persisted in `chat_sessions/{uid}.messages`. Keeps the
+ * document bounded regardless of how long a conversation runs — the client
+ * only ever needs recent history for context/display, and unbounded growth
+ * both costs more (document size) and risks the 1MiB Firestore document
+ * limit on a very long-running session. When the array would exceed this,
+ * only the most recent `MAX_PERSISTED_MESSAGES` are kept.
+ */
+export const MAX_PERSISTED_MESSAGES = 80;
+
+function trimMessages(messages: ChatMessage[]): ChatMessage[] {
+  if (messages.length <= MAX_PERSISTED_MESSAGES) return messages;
+  return messages.slice(messages.length - MAX_PERSISTED_MESSAGES);
+}
+
 function newMessage(
   role: "user" | "assistant",
   content: string,
@@ -119,8 +134,16 @@ export interface PersistTurnResult {
 /**
  * Append this turn's messages to `chat_sessions/{uid}` and, when a CV was
  * generated, merge its content into `candidate_profiles/{uid}` (identity
- * block untouched) and mark the session `completed`. Batched so the session
- * and profile writes are atomic.
+ * block untouched) and mark the session `completed`.
+ *
+ * Runs inside a Firestore transaction rather than a plain batch: a batch's
+ * writes are unconditional, so two concurrent turns (e.g. a double-submit or
+ * overlapping retries) racing on `priorMessages` would both blind-write their
+ * own `[...priorMessages, ...]` array and the loser's message(s) would be
+ * silently dropped (a lost update). The transaction instead re-reads the
+ * session doc AT COMMIT TIME, appends this turn onto whatever is actually
+ * there, and its write is aborted/retried by the SDK if the doc changed
+ * since the read — so concurrent turns compose instead of clobbering.
  */
 export async function persistTurn(
   db: Firestore,
@@ -137,56 +160,48 @@ export async function persistTurn(
     sessionType,
   } = params;
 
-  const messages: ChatMessage[] = [...priorMessages];
-  if (userMessageContent !== null && userMessageContent.length > 0) {
-    messages.push(newMessage("user", userMessageContent));
-  }
-  if (assistantReply.length > 0 || assistantQuickReplies.length > 0) {
-    messages.push(newMessage("assistant", assistantReply, assistantQuickReplies));
-  }
-
   const status: ChatSessionStatus = cvGenerated ? "completed" : "active";
 
   const sessionRef = db.collection("chat_sessions").doc(uid).withConverter(chatSessionsAdminConverter);
-  const batch = db.batch();
+  const profileRef = db
+    .collection("candidate_profiles")
+    .doc(uid)
+    .withConverter(candidateProfilesAdminConverter);
 
-  batch.set(
-    sessionRef,
-    {
-      messages,
-      status,
-      type: sessionType,
-      ...(cvData ? { cv_data: cvData } : {}),
-    } as never,
-    { merge: true },
-  );
+  const messages = await db.runTransaction(async (tx) => {
+    // Re-read the session inside the transaction so a concurrent turn's
+    // append (if any) is composed onto, not overwritten. Fall back to the
+    // caller-supplied `priorMessages` if the doc vanished between the
+    // caller's own read and this transaction (shouldn't happen in practice,
+    // but keeps this function total).
+    const sessionSnap = await tx.get(sessionRef);
+    const currentMessages = sessionSnap.exists ? sessionSnap.data()!.messages : priorMessages;
 
-  if (cvGenerated && cvData) {
-    const profileRef = db
-      .collection("candidate_profiles")
-      .doc(uid)
-      .withConverter(candidateProfilesAdminConverter);
-    const profileSnap = await profileRef.get();
-    const existingProfile = profileSnap.data();
+    const nextMessages: ChatMessage[] = [...currentMessages];
+    if (userMessageContent !== null && userMessageContent.length > 0) {
+      nextMessages.push(newMessage("user", userMessageContent));
+    }
+    if (assistantReply.length > 0 || assistantQuickReplies.length > 0) {
+      nextMessages.push(newMessage("assistant", assistantReply, assistantQuickReplies));
+    }
+    const trimmedMessages = trimMessages(nextMessages);
 
-    const completeness = computeProfileCompleteness({
-      professional_summary: cvData.professional_summary,
-      education: cvData.education,
-      experience: cvData.experience,
-      projects: cvData.projects,
-      skills: cvData.skills,
-      languages: cvData.languages,
-      certifications: cvData.certifications,
-      volunteer_work: cvData.volunteer_work,
-      preferences: existingProfile?.preferences ?? null,
-      cv_generated: true,
-    });
-
-    // Merge ONLY CV content fields — `personal` (identity) is never written
-    // here (CLAUDE.md §3.4): it stays server-owned from registration.
-    batch.set(
-      profileRef,
+    tx.set(
+      sessionRef,
       {
+        messages: trimmedMessages,
+        status,
+        type: sessionType,
+        ...(cvData ? { cv_data: cvData } : {}),
+      } as never,
+      { merge: true },
+    );
+
+    if (cvGenerated && cvData) {
+      const profileSnap = await tx.get(profileRef);
+      const existingProfile = profileSnap.data();
+
+      const completeness = computeProfileCompleteness({
         professional_summary: cvData.professional_summary,
         education: cvData.education,
         experience: cvData.experience,
@@ -195,14 +210,32 @@ export async function persistTurn(
         languages: cvData.languages,
         certifications: cvData.certifications,
         volunteer_work: cvData.volunteer_work,
-        profile_completeness: completeness,
-        last_active: FieldValue.serverTimestamp(),
-      } as never,
-      { merge: true },
-    );
-  }
+        preferences: existingProfile?.preferences ?? null,
+        cv_generated: true,
+      });
 
-  await batch.commit();
+      // Merge ONLY CV content fields — `personal` (identity) is never
+      // written here (CLAUDE.md §3.4): it stays server-owned from registration.
+      tx.set(
+        profileRef,
+        {
+          professional_summary: cvData.professional_summary,
+          education: cvData.education,
+          experience: cvData.experience,
+          projects: cvData.projects,
+          skills: cvData.skills,
+          languages: cvData.languages,
+          certifications: cvData.certifications,
+          volunteer_work: cvData.volunteer_work,
+          profile_completeness: completeness,
+          last_active: FieldValue.serverTimestamp(),
+        } as never,
+        { merge: true },
+      );
+    }
+
+    return trimmedMessages;
+  });
 
   return { status, messages };
 }
