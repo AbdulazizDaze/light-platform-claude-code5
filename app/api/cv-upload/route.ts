@@ -141,12 +141,9 @@ export async function POST(request: NextRequest) {
       session_status: persisted.status,
     });
   } catch (error) {
-    if (error instanceof RouteError) {
-      return toApiErrorResponse(error);
-    }
-    return apiError("internal", {
-      en: "Something went wrong. Please try again.",
-      ar: "حدث خطأ ما. الرجاء المحاولة مرة أخرى.",
-    });
+    // toApiErrorResponse handles both cases: RouteError passes through with
+    // its own code/message, anything else is logged server-side and mapped
+    // to a generic bilingual internal error.
+    return toApiErrorResponse(error);
   }
 }

@@ -214,6 +214,16 @@ function toGeminiMessage(message: ChatMessage): GeminiMessage {
 }
 
 /**
+ * Synthetic opening instruction for the greeting turn. Gemini rejects a
+ * generateContent request whose `contents` array is empty, so when there is
+ * no history and no user message yet this instruction is sent as the sole
+ * user part. It is never persisted to the session — the visible history
+ * starts with the assistant's greeting.
+ */
+export const GREETING_INSTRUCTION =
+  "(هذه بداية الجلسة — رحّب بالمرشح باسمه بأسلوب مهني ودود واسأله السؤال الافتتاحي.)";
+
+/**
  * Build the Gemini `contents` history: prior session messages (capped to the
  * last MAX_HISTORY_MESSAGES) followed by the new user turn (when present — the
  * initial-greeting request sends no new user message).
@@ -225,6 +235,9 @@ export function buildHistoryMessages(
   const capped = priorMessages.slice(-MAX_HISTORY_MESSAGES).map(toGeminiMessage);
   if (newUserMessage !== null && newUserMessage.length > 0) {
     capped.push({ role: "user", text: newUserMessage });
+  }
+  if (capped.length === 0) {
+    capped.push({ role: "user", text: GREETING_INSTRUCTION });
   }
   return capped;
 }

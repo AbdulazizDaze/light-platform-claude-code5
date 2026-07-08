@@ -96,6 +96,11 @@ function trimMessages(messages: ChatMessage[]): ChatMessage[] {
   return messages.slice(messages.length - MAX_PERSISTED_MESSAGES);
 }
 
+/** Drop `undefined` values deeply (Firestore rejects them). JSON-safe input only. */
+function stripUndefinedDeep<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
 function newMessage(
   role: "user" | "assistant",
   content: string,
@@ -200,8 +205,12 @@ export async function persistTurn(
         messages: trimmedMessages,
         status,
         type: sessionType,
-        ...(cvState ? { cv_state: cvState } : {}),
-        ...(cvData ? { cv_data: cvData } : {}),
+        // JSON round-trip drops `undefined` values (explicit undefineds on
+        // Zod-optional fields), which the Admin SDK rejects as Firestore
+        // document values. cv_state/cv_data are plain JSON data by
+        // construction (parsed model output), so this is lossless.
+        ...(cvState ? { cv_state: stripUndefinedDeep(cvState) } : {}),
+        ...(cvData ? { cv_data: stripUndefinedDeep(cvData) } : {}),
       } as never,
       { merge: true },
     );

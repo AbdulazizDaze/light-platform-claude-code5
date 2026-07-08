@@ -100,6 +100,12 @@ export default function ChatPage() {
 
   const scrollAnchorRef = React.useRef<HTMLDivElement | null>(null);
   const hasRequestedGreeting = React.useRef(false);
+  // Session hydration: a returning user's history lives in
+  // chat_sessions/{uid} (owner-readable per firestore.rules) — restore it on
+  // mount so refreshing never bounces a mid-conversation (or completed)
+  // session back to the entry-choice card.
+  const [sessionHydrated, setSessionHydrated] = React.useState(false);
+  const hasHydrated = React.useRef(false);
 
   const dir = dirFor(LOCALE);
 
@@ -111,6 +117,51 @@ export default function ChatPage() {
       router.replace("/register");
     }
   }, [authLoading, user, router]);
+
+  // Hydrate the persisted session once per mount (before offering the entry
+  // choice): restores messages, the generated CV, and completed status.
+  React.useEffect(() => {
+    if (authLoading || !user) return;
+    if (hasHydrated.current) return;
+    hasHydrated.current = true;
+
+    (async () => {
+      try {
+        const [{ doc, getDoc }, { db }, { chatSessionsClientConverter }] = await Promise.all([
+          import("firebase/firestore"),
+          import("@/lib/firebase/client"),
+          import("@/lib/firebase/converters"),
+        ]);
+        const snap = await getDoc(
+          doc(db, "chat_sessions", user.uid).withConverter(chatSessionsClientConverter),
+        );
+        const session = snap.exists() ? snap.data() : null;
+        if (session && session.messages.length > 0) {
+          setMessages(
+            session.messages.map((m) => ({
+              id: m.id,
+              role: m.role,
+              content: m.content,
+              timestamp:
+                typeof (m.timestamp as { toDate?: () => Date })?.toDate === "function"
+                  ? (m.timestamp as unknown as { toDate: () => Date }).toDate()
+                  : new Date(),
+              quickReplies: m.quick_replies,
+            })),
+          );
+          setSessionStatus(session.status === "completed" ? "completed" : "active");
+          if (session.cv_data) setCv(session.cv_data);
+          setEntryChoiceMade(true);
+          hasRequestedGreeting.current = true;
+        }
+      } catch {
+        // Hydration is best-effort — a failed read falls back to a fresh-start
+        // view rather than blocking the conversation.
+      } finally {
+        setSessionHydrated(true);
+      }
+    })();
+  }, [authLoading, user]);
 
   const sendToApi = React.useCallback(
     async (message: string) => {
@@ -330,7 +381,12 @@ export default function ChatPage() {
   // Shown only for a genuinely new session: no history yet, no choice made,
   // and neither the greeting nor an upload is already in flight.
   const showEntryChoice =
-    !authLoading && !!user && !entryChoiceMade && messages.length === 0 && !isUploading;
+    !authLoading &&
+    !!user &&
+    sessionHydrated &&
+    !entryChoiceMade &&
+    messages.length === 0 &&
+    !isUploading;
 
   const lastAssistantMessage = [...messages].reverse().find((m) => m.role === "assistant");
   const showQuickReplies =
