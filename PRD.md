@@ -67,16 +67,56 @@ method — the product is the outcome.
 - Inferred content is visually marked (subtle "AI" chip) until the user confirms or edits it —
   transparency instead of interrogation.
 
+**Try-first (founder decision 2026-07-08): value BEFORE registration.**
+The user experiences the magic anonymously; registration is the *receipt*, not the gate.
+Anonymous Firebase auth signs in silently on first interaction; a light PDPL consent notice sits
+at the conversation start («بمتابعتك توافق على معالجة بياناتك لبناء سيرتك — التفاصيل»). Full
+registration (name, phone, city, gender, nationality + explicit consent) happens at the first
+moment that needs it: **saving / downloading the PDF / becoming discoverable** — pre-filled with
+anything already known from the conversation. The same principle applies to recruiters in M2:
+describe a role → watch the job post generate → register to publish.
+
 **The 3-minute golden path (M1's acceptance test):**
 
-1. Landing → «سوّ سيرتك بـ٣ دقايق» → register (name, phone, city, gender, nationality, consent).
+1. Landing → «سوّ سيرتك بـ٣ دقايق» → straight into the composer. No form.
 2. One screen: «كلمنا عن نفسك — اكتب براحتك، الصق من ملف قديم، أو ارفع سيرتك» (textarea + upload +
-   mic in one composer).
+   mic in one composer). Light consent notice visible.
 3. User dumps the Jarir paragraph (or uploads a PDF). CV visibly assembles < 5s. Light streams one
    short reply confirming + asking the 1–2 real gaps as tap-chips where possible
    (مستوى الإنجليزي: ممتاز / جيد / مبتدئ).
-4. One or two more exchanges max → completeness threshold crossed → PDF downloads in one tap.
+4. One or two more exchanges max → completeness threshold crossed → «حمّل PDF» ignites → the
+   register-to-download sheet (name/phone/city/gender/nationality + consent, ≤30s) → PDF in hand.
    Bilingual toggle, 4 templates, 6 themes on the same screen.
+
+## 3b. Audience (who this is actually for — every UX decision traces here)
+
+**Two user types, always.** Every surface knows which of the two it is speaking to, and each gets
+its own front door from the landing: **باحث عن عمل** (M1) and **باحث عن مواهب** (recruiters — M2,
+visible from day one as a promise, never a dead end).
+
+**Primary candidate persona — the phone-first fresh grad (21–25):**
+- Lives on WhatsApp/TikTok; voice notes are natural, forms are hostile; expects snappy, animated,
+  modern UI. A large share of sessions will be mobile — the mobile experience must be designed
+  with the same intent as desktop (founder decision: **mobile and desktop are siblings**, neither
+  is an adaptation).
+- **Doesn't know what a good CV contains.** Flags must teach, not just point («ناقص: الشهادات —
+  عندك دورات أونلاين؟ حتى دورة منظمة على يوتيوب تنحسب»). The product's mentorship lives in the UI.
+- **English insecurity is common** — Light writing the English side *for* them is a hero moment;
+  the EN toggle should be showcased, not hidden.
+- Types Arabic informally (typos, mixed numerals, occasional franco-arabic) — the engine must be
+  robust to all of it.
+
+**Secondary candidate personas:** career switchers (1–3 yrs, want repositioning), returning women
+(Vision 2030 — gender-aware Arabic already built; privacy clarity is a *selling point*: who can
+see my number, said plainly in the UI), part-time students.
+
+**Recruiter persona (M2):** SMB owner/manager without HR, often on a phone between tasks; wants
+one line → a publishable bilingual post → ranked people with phone numbers; Nitaqat anxiety is
+the hook.
+
+**Trust rules for this market (all personas):** real Saudi professional tone, «مجاني تماماً»
+stated plainly, data-in-Kingdom as visible copy, no dark patterns, and the product must prove
+itself within the first 30 seconds (see try-first above).
 
 ## 4. Intelligence spec (what "smart" concretely means in M1)
 
@@ -129,15 +169,25 @@ writes off the critical path (fire-and-forget with retry).
 
 ### M1 — the best CV builder in KSA (rebuild against this PRD)
 
-- The split-screen live-CV experience (§3) with streaming turns (§5).
+- The live-CV experience (§3) with streaming turns (§5) — **designed for mobile and desktop as
+  siblings** (mobile: CV peek-pill + swipe-up sheet; desktop: split-screen). A screen-by-screen
+  UX spec (`docs/ux-spec.md`) + clickable mockup are a **design gate**: founder approves the felt
+  experience before any build.
+- **Try-first flow** (§3): anonymous start, light consent notice, full registration at
+  save/download — the registration form itself is kept (it passed testing) but moves to the
+  receipt moment and pre-fills from conversation context.
 - Inputs: free text · paste · PDF upload · **voice note** (browser mic → transcription; if this
   slips, it slips to M1.5 — the composer is designed for it from day one).
 - Bilingual CV (AR/EN), 4 templates, 6 themes + custom, in-place editing, PDF (existing Cloud Run
   service — kept).
-- Dashboard: CV status, completeness, «ملفك جاهز للاكتشاف» (matching promised, arrives M2).
-- Registration + PDPL consent (kept as-is — it passed testing).
-- Brand v3 (navy/amber, logo, dark landing) is kept; landing headline shifts to the convenience
-  promise: «أفضل وأسرع طريقة تسوي فيها سيرتك — بالعربي والإنجليزي، بـ٣ دقايق».
+- Dashboard: CV status, completeness, and **honest-scope messaging (founder decision
+  2026-07-08):** M1 promises only the CV + a ready profile. Allowed: «التوظيف الذكي قادم قريباً —
+  ملفك بيكون من أول المرشحين». Forbidden until M2 is live: any present-tense matching promise
+  («ستصلك الفرص», «ملفك قيد المطابقة»).
+- Brand v3 (navy/amber, logo, dark landing) is kept; landing speaks to BOTH audiences with two
+  clear doors (باحث عن عمل primary; باحث عن مواهب visible with its M2 promise, never a dead end);
+  candidate headline shifts to the convenience promise: «أفضل وأسرع طريقة تسوي فيها سيرتك —
+  بالعربي والإنجليزي، بـ٣ دقايق».
 
 ### M2 — the ZipRecruiter mechanics (the marketplace)
 
