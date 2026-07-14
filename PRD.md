@@ -33,15 +33,19 @@ method — the product is the outcome.
 
 ## 2. Experience principles (every feature is judged against these)
 
-1. **Instant.** First streamed words of any AI response in **< 1s**; something visible always
-   happens **< 300ms** after any user action. No spinner longer than a heartbeat, ever.
+1. **Responsive — but never dumb-fast.** Intelligence and output quality are never sacrificed for
+   latency. The commitment is *visible progress*: something acknowledges every user action
+   **< 300ms**, replies stream as they're written, and the live CV fills while the model works —
+   so a genuinely deep turn may take a few seconds, but the product never feels frozen or shallow.
 2. **Effortless.** Count the user's actions and minimize ruthlessly. Paste a paragraph, send a
    voice note, upload an old CV, or just type freely — all roads work. Confirmations are one-tap
    chips, never "please type your answer". Target: **signup → finished CV in under 3 minutes and
    under 10 user actions.**
-3. **Proactive.** Light acts without being asked: the CV assembles itself live, weak phrasing gets
-   upgraded automatically, missing pieces get filled with smart defaults and *flagged* rather than
-   asked about one-by-one. Later (M2): jobs come to you, employers get invited to you.
+3. **Proactive — without assuming.** Light acts without being asked: the CV assembles itself live
+   and weak phrasing gets upgraded automatically. But Light **never invents facts**: anything
+   missing or uncertain becomes a *flagged placeholder* in the CV for the user to fill whenever
+   they want — not a fabricated default and not a one-by-one interrogation. Later (M2): jobs come
+   to you, employers get invited to you.
 4. **Honest & Saudi-professional.** Natural Saudi register, professional-warm, zero cheese
    (banned: حياك الله يا بطل، يا وحش، والله إنك مبدع). Never fabricates facts; upgrades phrasing,
    not truth. Bilingual by construction; Arabic is the default of every surface.
@@ -84,32 +88,42 @@ method — the product is the outcome.
    the visible proof of intelligence.
 3. **Skill inference with one-tap confirmation** — retail year ⇒ خدمة العملاء، البيع، الإقناع،
    العمل تحت الضغط، POS as pre-checked chips the user can untick; never a typing task.
-4. **Smart defaults over questions** — derivable things (career objective from major + target
-   role, languages from the conversation language) get defaulted and flagged, not asked.
-5. **Gap-aware, not checklist-driven** — asks only what genuinely blocks a great CV, bundles
-   related gaps, never re-asks, and stops asking when the CV is good enough.
+4. **Flags, not assumptions** — Light never invents a fact the user didn't state. Missing or
+   uncertain fields appear in the live CV as flagged placeholders («ناقص: مستواك بالإنجليزي»،
+   «أضف شهاداتك إن وجدت») that the user fills whenever they want. Only *derivations from stated
+   facts* are allowed (e.g. inferred skills from a stated job) and those always carry the "AI"
+   chip + one-tap confirm.
+5. **Gap-aware on demand** — asks only the 1–2 gaps that genuinely block a great CV, bundles
+   related gaps, never re-asks, and stops when the CV is good enough. When the user asks
+   «وش باقي؟ / what else؟» (or similar), Light lists every open flag with a concrete suggestion
+   for each.
 
 Explicitly **out of M1's intelligence scope** (they are M2/M3, don't fake them in M1): salary
 benchmarks, market-demand positioning, interview prep, application tracking.
 
 ## 5. Performance budget (hard requirements, tested before any ship)
 
+**Quality precedes latency:** these budgets are met through architecture (streaming, visible
+progress, background work) — never by weakening the model, shortening its reasoning, or trimming
+what it extracts/writes. If a budget and quality ever genuinely conflict, quality wins and the
+budget is renegotiated with the founder.
+
 | Metric | Budget |
 |---|---|
-| First streamed token of any AI reply | < 1.0s p50, < 2.5s p95 |
-| UI acknowledgment of any user action | < 300ms |
-| Full turn (reply complete + CV updated) | < 5s p50 |
-| Upload → first extraction visible | < 6s |
+| UI acknowledgment of any user action | < 300ms (hard) |
+| First streamed token of an AI reply | ~1–2s target — perceived responsiveness, not a quality cap |
+| Full turn (reply complete + CV updated) | a few seconds is fine **with visible progress** (streaming text / CV blocks landing) |
+| Upload → first extraction visible | < 8s with progressive display |
 | PDF download click → file | < 5s |
 | Registration → CV done (golden path) | < 3 min, ≤ 10 user actions |
 | Production build (`next build`) always | dev-mode latency never demoed again |
 
 Engineering implications (M1): SSE/streaming responses from `/api/chat`; one model call per turn
-that streams the reply text first and emits the state delta; slim system prompt (≤ ~2K tokens);
-`gemini-2.5-flash` with thinking off for turn calls; no second blocking "CV generation" call —
-the CV is continuously assembled, with an optional background polish pass that never blocks the
-user; optimistic UI everywhere; Firestore writes off the critical path (fire-and-forget with
-retry).
+that streams the reply text first and emits the state delta; model/settings chosen for the best
+extraction + writing quality (latency is handled by streaming and the live CV, not by a weaker
+model); no second blocking "CV generation" call — the CV is continuously assembled, with an
+optional background polish pass that never blocks the user; optimistic UI everywhere; Firestore
+writes off the critical path (fire-and-forget with retry).
 
 ## 6. Scope
 
@@ -161,7 +175,8 @@ owner-only rules, rate limits, PDPL) · Nitaqat spec · brand tokens (navy #1421
 ## 9. Success metrics (v4)
 
 - **Golden-path completion:** ≥ 70% of users who send one message finish a CV. Median < 3 min.
-- **Perceived speed:** p50 first-token < 1s in production (measured, not vibes).
+- **Perceived responsiveness:** every turn shows visible progress within ~1–2s in production
+  (streamed text or CV blocks landing) — measured, not vibes. Quality is never traded for this.
 - **Effort:** median user actions to finished CV ≤ 10; median user-typed messages ≤ 3.
 - **Quality:** ≥ 80% of users download the PDF without editing more than 2 fields.
 - North star (unchanged): successful hires/month once M2 ships.
